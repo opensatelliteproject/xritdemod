@@ -8,7 +8,7 @@ It depends on **SatHelper** library either by a static link or shared link (see 
 
 ![Screenshot](decoder.png)
 
-To compile just go to any of the folders `Debug`, `Release` or `Release Static` and run `make`.
+To compile just go to any of the folders `Debug`, `Release` or `Release Static` and run `make`. You can also use `Eclipse CDT` to compile the project.
 
 
 Dependencies:

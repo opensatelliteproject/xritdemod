@@ -1,0 +1,12 @@
+channels/
+Debug/*.so
+Debug/**/*.o
+Debug/**/*.d
+Release/*.so
+Release/**/*.o
+Release/**/*.d
+Debug/newdecoder
+Release/newdecoder
+Release Static/newdecoder
+Release Static/**/*.o
+Release Static/**/*.d

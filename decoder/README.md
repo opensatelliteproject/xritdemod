@@ -13,4 +13,4 @@ To compile just go to any of the folders `Debug`, `Release` or `Release Static` 
 
 Dependencies:
 
-* [SatHelper](https://github.com/racerxdl/open-satellite-project/tree/master/SatHelper)
+* [SatHelper](SatHelper/)

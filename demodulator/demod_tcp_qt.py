@@ -5,7 +5,7 @@
 # Title: LRIT Demodulator
 # Author: Lucas Teske
 # Description: https://github.com/racerxdl/open-satellite-project
-# Generated: Fri Nov 11 02:05:12 2016
+# Generated: Tue Nov 15 17:17:34 2016
 ##################################################
 
 if __name__ == '__main__':
@@ -130,6 +130,37 @@ class demod_tcp_qt(gr.top_block, Qt.QWidget):
         
         self._qtgui_waterfall_sink_x_0_win = sip.wrapinstance(self.qtgui_waterfall_sink_x_0.pyqwidget(), Qt.QWidget)
         self.top_grid_layout.addWidget(self._qtgui_waterfall_sink_x_0_win, 1,0,6,1)
+        self.qtgui_number_sink_0 = qtgui.number_sink(
+            gr.sizeof_float,
+            0.3,
+            qtgui.NUM_GRAPH_VERT,
+            1
+        )
+        self.qtgui_number_sink_0.set_update_time(0.10)
+        self.qtgui_number_sink_0.set_title('SNR')
+        
+        labels = [' ', '', '', '', '',
+                  '', '', '', '', '']
+        units = ['dB', '', '', '', '',
+                 '', '', '', '', '']
+        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
+                  ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
+        factor = [1, 1, 1, 1, 1,
+                  1, 1, 1, 1, 1]
+        for i in xrange(1):
+            self.qtgui_number_sink_0.set_min(i, 0)
+            self.qtgui_number_sink_0.set_max(i, 10)
+            self.qtgui_number_sink_0.set_color(i, colors[i][0], colors[i][1])
+            if len(labels[i]) == 0:
+                self.qtgui_number_sink_0.set_label(i, "Data {0}".format(i))
+            else:
+                self.qtgui_number_sink_0.set_label(i, labels[i])
+            self.qtgui_number_sink_0.set_unit(i, units[i])
+            self.qtgui_number_sink_0.set_factor(i, factor[i])
+        
+        self.qtgui_number_sink_0.enable_autoscale(False)
+        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.pyqwidget(), Qt.QWidget)
+        self.top_grid_layout.addWidget(self._qtgui_number_sink_0_win, 0,2,7,1)
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
         	8192, #size
         	firdes.WIN_BLACKMAN_hARRIS, #wintype
@@ -228,12 +259,18 @@ class demod_tcp_qt(gr.top_block, Qt.QWidget):
         self.osmosdr_source_0.set_bandwidth(0, 0)
           
         self.low_pass_filter_0 = filter.fir_filter_ccf(10, firdes.low_pass(
-        	1, samp_rate*10, symbol_rate * 2, 100e3, firdes.WIN_HAMMING, 6.76))
-        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(pll_alpha, 2, True)
+        	1, samp_rate*10, samp_rate/2, 100e3, firdes.WIN_HAMMING, 6.76))
+        self.high_pass_filter_0 = filter.fir_filter_ccf(1, firdes.high_pass(
+        	1, samp_rate, symbol_rate, 300e3, firdes.WIN_BLACKMAN, 6.76))
+        self.digital_costas_loop_cc_0 = digital.costas_loop_cc(pll_alpha, 2, False)
         self.digital_clock_recovery_mm_xx_0 = digital.clock_recovery_mm_cc(sps, clock_alpha**2/4.0, 0.5, clock_alpha, 0.005)
         self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_char*1, 64)
+        self.blocks_rms_xx_0_0 = blocks.rms_cf(0.0001)
+        self.blocks_rms_xx_0 = blocks.rms_cf(0.0001)
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_char*64)
+        self.blocks_nlog10_ff_0 = blocks.nlog10_ff(20, 1, 0)
         self.blocks_float_to_char_0 = blocks.float_to_char(1, 127)
+        self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_complex_to_real_0 = blocks.complex_to_real(1)
         self.analog_agc_xx_0 = analog.agc_cc(100e-4, 0.5, 0.5)
         self.analog_agc_xx_0.set_max_gain(4000)
@@ -241,17 +278,24 @@ class demod_tcp_qt(gr.top_block, Qt.QWidget):
         ##################################################
         # Connections
         ##################################################
+        self.connect((self.analog_agc_xx_0, 0), (self.high_pass_filter_0, 0))    
         self.connect((self.analog_agc_xx_0, 0), (self.qtgui_freq_sink_x_0, 0))    
         self.connect((self.analog_agc_xx_0, 0), (self.qtgui_waterfall_sink_x_0, 0))    
         self.connect((self.analog_agc_xx_0, 0), (self.root_raised_cosine_filter_0, 0))    
         self.connect((self.blocks_complex_to_real_0, 0), (self.blocks_float_to_char_0, 0))    
+        self.connect((self.blocks_divide_xx_0, 0), (self.blocks_nlog10_ff_0, 0))    
         self.connect((self.blocks_float_to_char_0, 0), (self.blocks_stream_to_vector_0, 0))    
+        self.connect((self.blocks_nlog10_ff_0, 0), (self.qtgui_number_sink_0, 0))    
+        self.connect((self.blocks_rms_xx_0, 0), (self.blocks_divide_xx_0, 0))    
+        self.connect((self.blocks_rms_xx_0_0, 0), (self.blocks_divide_xx_0, 1))    
         self.connect((self.blocks_stream_to_vector_0, 0), (self.blocks_null_sink_0, 0))    
         self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.blocks_complex_to_real_0, 0))    
         self.connect((self.digital_clock_recovery_mm_xx_0, 0), (self.qtgui_const_sink_x_0, 0))    
         self.connect((self.digital_costas_loop_cc_0, 0), (self.digital_clock_recovery_mm_xx_0, 0))    
+        self.connect((self.high_pass_filter_0, 0), (self.blocks_rms_xx_0_0, 0))    
         self.connect((self.low_pass_filter_0, 0), (self.analog_agc_xx_0, 0))    
         self.connect((self.osmosdr_source_0, 0), (self.low_pass_filter_0, 0))    
+        self.connect((self.root_raised_cosine_filter_0, 0), (self.blocks_rms_xx_0, 0))    
         self.connect((self.root_raised_cosine_filter_0, 0), (self.digital_costas_loop_cc_0, 0))    
 
     def closeEvent(self, event):
@@ -266,7 +310,7 @@ class demod_tcp_qt(gr.top_block, Qt.QWidget):
         self.symbol_rate = symbol_rate
         self.set_sps((self.samp_rate*1.0)/(self.symbol_rate*1.0))
         self.root_raised_cosine_filter_0.set_taps(firdes.root_raised_cosine(1, self.samp_rate, self.symbol_rate, 0.5, 361))
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate*10, self.symbol_rate * 2, 100e3, firdes.WIN_HAMMING, 6.76))
+        self.high_pass_filter_0.set_taps(firdes.high_pass(1, self.samp_rate, self.symbol_rate, 300e3, firdes.WIN_BLACKMAN, 6.76))
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -278,7 +322,8 @@ class demod_tcp_qt(gr.top_block, Qt.QWidget):
         self.qtgui_waterfall_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
         self.qtgui_freq_sink_x_0.set_frequency_range(self.center_freq, self.samp_rate)
         self.osmosdr_source_0.set_sample_rate(self.samp_rate*10)
-        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate*10, self.symbol_rate * 2, 100e3, firdes.WIN_HAMMING, 6.76))
+        self.low_pass_filter_0.set_taps(firdes.low_pass(1, self.samp_rate*10, self.samp_rate/2, 100e3, firdes.WIN_HAMMING, 6.76))
+        self.high_pass_filter_0.set_taps(firdes.high_pass(1, self.samp_rate, self.symbol_rate, 300e3, firdes.WIN_BLACKMAN, 6.76))
 
     def get_vgagain(self):
         return self.vgagain

@@ -9,6 +9,7 @@
 #define CHANNELWRITTER_H_
 
 #include <string>
+#include <cstdint>
 
 class ChannelWriter {
 private:
@@ -17,7 +18,7 @@ public:
     ChannelWriter(std::string baseFolder);
     void writeChannel(uint8_t *data, int size, uint16_t vcid);
     void dumpCorruptedPacket(uint8_t *data, int size, int type);
-    void dumpCorruptedPacketStatistics(uint16_t viterbiErrors, uint8_t syncCorrelation);
+    void dumpCorruptedPacketStatistics(uint16_t viterbiErrors, uint8_t syncCorrelation, int32_t *rsErrors);
 };
 
 #endif /* CHANNELWRITTER_H_ */

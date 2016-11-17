@@ -35,6 +35,7 @@ const uint64_t UW2 = 0x035d49c24ff2686b;
 
 int main() {
     uint8_t codedData[CODEDFRAMESIZE];
+    uint8_t vitdecData[FRAMESIZE];
     uint8_t decodedData[FRAMESIZE];
     uint8_t rsCorrectedData[FRAMESIZE];
     uint8_t rsWorkBuffer[255];
@@ -126,6 +127,7 @@ int main() {
 
             // DeRandomize Stream
             uint8_t skipsize = (SYNCWORDSIZE/8);
+            memcpy(vitdecData, decodedData, FRAMESIZE);
             memcpy(decodedData, decodedData + skipsize, FRAMESIZE-skipsize);
             deRandomizer.DeRandomize(decodedData, CODEDFRAMESIZE);
 
@@ -143,9 +145,10 @@ int main() {
             if (derrors[0] == -1 && derrors[1] == -1 && derrors[2] == -1 && derrors[3] == -1) {
               droppedPackets++;
               #ifdef DUMP_CORRUPTED_PACKETS
-              channelWriter.dumpCorruptedPacket(decodedData, FRAMESIZE, 0);
-              channelWriter.dumpCorruptedPacket(rsCorrectedData, FRAMESIZE, 1);
-              channelWriter.dumpCorruptedPacketStatistics(viterbi.GetBER(), corr);
+              channelWriter.dumpCorruptedPacket(codedData, CODEDFRAMESIZE, 0);
+              channelWriter.dumpCorruptedPacket(vitdecData, FRAMESIZE, 1);
+              channelWriter.dumpCorruptedPacket(rsCorrectedData, FRAMESIZE, 2);
+              channelWriter.dumpCorruptedPacketStatistics(viterbi.GetBER(), corr, derrors);
               #endif
               continue;
             } else {

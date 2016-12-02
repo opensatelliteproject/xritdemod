@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lSatHelper -lfec
+LIBS := -lSatHelper -lfec -lpthread
 

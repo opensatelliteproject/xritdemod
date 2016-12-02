@@ -14,6 +14,8 @@
 #include <netinet/in.h>
 #include "Display.h"
 #include "ChannelWriter.h"
+#include "ChannelDispatcher.h"
+#include "StatisticsDispatcher.h"
 
 using namespace std;
 
@@ -33,7 +35,8 @@ using namespace std;
 const uint64_t UW0 = 0xfca2b63db00d9794;
 const uint64_t UW2 = 0x035d49c24ff2686b;
 
-int main() {
+int main(int argc, char **argv) {
+
     uint8_t codedData[CODEDFRAMESIZE];
     uint8_t vitdecData[FRAMESIZE];
     uint8_t decodedData[FRAMESIZE];
@@ -49,6 +52,9 @@ int main() {
     int64_t lastPacketCount[256];
     int64_t receivedPacketsPerFrame[256];
     uint32_t checkTime = 0;
+    bool runUi = false;
+    bool dump = false;
+    Statistics statistics;
 
     SatHelper::Correlator correlator;
     SatHelper::PacketFixer packetFixer;
@@ -59,6 +65,20 @@ int main() {
 
     Display display;
 
+    if (argc > 1) {
+        std::string ui(argv[1]);
+        if (ui == "display") {
+            runUi = true;
+        }
+    }
+
+    if (argc > 2) {
+        std::string dumppacket(argv[2]);
+        if (dumppacket == "dump") {
+            dump = true;
+        }
+    }
+
     for (int i=0; i<256;i++) {
       lostPacketsPerFrame[i] = 0;
       lastPacketCount[i] = -1;
@@ -68,136 +88,159 @@ int main() {
     correlator.addWord(UW0);
     correlator.addWord(UW2);
 
+    // Dispatchers
+    ChannelDispatcher channelDispatcher;
+    StatisticsDispatcher statisticsDispatcher;
+
     // Socket Init
     SatHelper::TcpServer tcpServer;
+    cout << "Starting Demod Receiver at port 5000" << endl;
     tcpServer.Listen(5000);
-    cout << "Waiting for a client connection" << endl;
-
-    SatHelper::TcpSocket client = tcpServer.Accept();
-    cout << "Client connected!" << endl;
-
-    SatHelper::ScreenManager::Clear();
 
     while (true) {
-        uint32_t chunkSize = CODEDFRAMESIZE;
-        try {
-            checkTime = SatHelper::Tools::getTimestamp();
-            while (client.AvailableData() < CODEDFRAMESIZE) {
-                if (SatHelper::Tools::getTimestamp() - checkTime > TIMEOUT) {
-                    throw SatHelper::ClientDisconnectedException();
-                }
-            }
-            client.Receive((char *) codedData, chunkSize);
-            correlator.correlate(codedData, chunkSize);
+        cout << "Waiting for a client connection" << endl;
 
-            uint32_t word = correlator.getCorrelationWordNumber();
-            uint32_t pos = correlator.getHighestCorrelationPosition();
-            uint32_t corr = correlator.getHighestCorrelation();
-            SatHelper::PhaseShift phaseShift = word == 0 ? SatHelper::PhaseShift::DEG_0 : SatHelper::PhaseShift::DEG_180;
+        SatHelper::TcpSocket client = tcpServer.Accept();
+        cout << "Client connected!" << endl;
 
-            if (corr < MINCORRELATIONBITS) {
-                cerr << "Correlation didn't match criteria of " << MINCORRELATIONBITS << " bits." << std::endl;
-                continue;
-            }
 
-            // Sync Frame
-            if (pos != 0) {
-                // Shift position
-                char *shiftedPosition = (char *) codedData + pos;
-                memcpy(codedData, shiftedPosition, CODEDFRAMESIZE - pos); // Copy from p to chunk size to start of codedData
-                chunkSize = pos; // Read needed bytes to fill a frame.
+        if (runUi) {
+            SatHelper::ScreenManager::Clear();
+        }
+
+        while (true) {
+            uint32_t chunkSize = CODEDFRAMESIZE;
+            try {
                 checkTime = SatHelper::Tools::getTimestamp();
-                while (client.AvailableData() < chunkSize) {
+                while (client.AvailableData() < CODEDFRAMESIZE) {
                     if (SatHelper::Tools::getTimestamp() - checkTime > TIMEOUT) {
                         throw SatHelper::ClientDisconnectedException();
                     }
                 }
+                client.Receive((char *) codedData, chunkSize);
+                correlator.correlate(codedData, chunkSize);
 
-                client.Receive((char *) (codedData + CODEDFRAMESIZE - pos), chunkSize);
+                uint32_t word = correlator.getCorrelationWordNumber();
+                uint32_t pos = correlator.getHighestCorrelationPosition();
+                uint32_t corr = correlator.getHighestCorrelation();
+                SatHelper::PhaseShift phaseShift = word == 0 ? SatHelper::PhaseShift::DEG_0 : SatHelper::PhaseShift::DEG_180;
+
+                if (corr < MINCORRELATIONBITS) {
+                    cerr << "Correlation didn't match criteria of " << MINCORRELATIONBITS << " bits." << std::endl;
+                    continue;
+                }
+
+                // Sync Frame
+                if (pos != 0) {
+                    // Shift position
+                    char *shiftedPosition = (char *) codedData + pos;
+                    memcpy(codedData, shiftedPosition, CODEDFRAMESIZE - pos); // Copy from p to chunk size to start of codedData
+                    chunkSize = pos; // Read needed bytes to fill a frame.
+                    checkTime = SatHelper::Tools::getTimestamp();
+                    while (client.AvailableData() < chunkSize) {
+                        if (SatHelper::Tools::getTimestamp() - checkTime > TIMEOUT) {
+                            throw SatHelper::ClientDisconnectedException();
+                        }
+                    }
+
+                    client.Receive((char *) (codedData + CODEDFRAMESIZE - pos), chunkSize);
+                }
+
+                // Fix Phase Shift
+                packetFixer.fixPacket(codedData, CODEDFRAMESIZE, phaseShift, false);
+
+                // Viterbi Decode
+                viterbi.decode(codedData, decodedData);
+                float signalErrors = viterbi.GetPercentBER(); // 0 to 16
+                signalErrors = 100 - (signalErrors * 10);
+                uint8_t signalQuality = signalErrors < 0 ? 0 : (uint8_t)signalErrors;
+
+                // DeRandomize Stream
+                uint8_t skipsize = (SYNCWORDSIZE/8);
+                memcpy(vitdecData, decodedData, FRAMESIZE);
+                memcpy(decodedData, decodedData + skipsize, FRAMESIZE-skipsize);
+                deRandomizer.DeRandomize(decodedData, CODEDFRAMESIZE);
+
+                averageVitCorrections += viterbi.GetBER();
+                frameCount++;
+
+                // Reed Solomon Error Correction
+                int32_t derrors[4] = { 0, 0, 0, 0 };
+                for (int i=0; i<RSBLOCKS; i++) {
+                  reedSolomon.deinterleave(decodedData, rsWorkBuffer, i, RSBLOCKS);
+                  derrors[i] = reedSolomon.decode_ccsds(rsWorkBuffer);
+                  reedSolomon.interleave(rsWorkBuffer, rsCorrectedData, i, RSBLOCKS);
+                }
+
+                if (derrors[0] == -1 && derrors[1] == -1 && derrors[2] == -1 && derrors[3] == -1) {
+                  droppedPackets++;
+                  #ifdef DUMP_CORRUPTED_PACKETS
+                  channelWriter.dumpCorruptedPacket(codedData, CODEDFRAMESIZE, 0);
+                  channelWriter.dumpCorruptedPacket(vitdecData, FRAMESIZE, 1);
+                  channelWriter.dumpCorruptedPacket(rsCorrectedData, FRAMESIZE, 2);
+                  channelWriter.dumpCorruptedPacketStatistics(viterbi.GetBER(), corr, derrors);
+                  #endif
+                  continue;
+                } else {
+                  averageRSCorrections += derrors[0] != -1 ? derrors[0] : 0;
+                  averageRSCorrections += derrors[1] != -1 ? derrors[1] : 0;
+                  averageRSCorrections += derrors[2] != -1 ? derrors[2] : 0;
+                  averageRSCorrections += derrors[3] != -1 ? derrors[3] : 0;
+                }
+
+                // Packet Header Filtering
+                //uint8_t versionNumber = (*rsCorrectedData) & 0xC0 >> 6;
+                uint8_t scid = ((*rsCorrectedData) & 0x3F) << 2 | (*(rsCorrectedData+1) & 0xC0) >> 6;
+                uint8_t vcid = (*(rsCorrectedData+1)) & 0x3F;
+
+                // Packet Counter from Packet
+                uint32_t counter = *((uint32_t *) (rsCorrectedData+2));
+                counter = SatHelper::Tools::swapEndianess(counter);
+                counter &= 0xFFFFFF00;
+                counter = counter >> 8;
+                //writeChannel(rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE/8), vcid);
+                if (dump) {
+                    channelWriter.writeChannel(rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE/8), vcid);
+                }
+                channelDispatcher.add((char *)rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE/8));
+
+                if (lastPacketCount[vcid]+1 != counter && lastPacketCount[vcid] > -1) {
+                  int lostCount = counter - lastPacketCount[vcid] - 1;
+                  lostPackets += lostCount;
+                  lostPacketsPerFrame[vcid] += lostCount;
+                }
+
+                lastPacketCount[vcid] = counter;
+                receivedPacketsPerFrame[vcid] = receivedPacketsPerFrame[vcid] == -1 ? 1 : receivedPacketsPerFrame[vcid] + 1;
+                uint8_t phaseCorr = phaseShift == SatHelper::PhaseShift::DEG_180 ? 180 : 0;
+                uint16_t partialVitCorrections = (uint16_t) (averageVitCorrections / frameCount);
+                uint8_t partialRSCorrections = (uint8_t) (averageRSCorrections / frameCount);
+
+                statistics.update(scid, vcid, (uint64_t) counter, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors,
+                        signalQuality, corr, phaseCorr,
+                        lostPackets, partialVitCorrections, partialRSCorrections,
+                        droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount);
+
+                statisticsDispatcher.Update(statistics);
+
+                if (runUi) {
+                    display.update(scid, vcid, (uint64_t) counter, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors,
+                            signalQuality, corr, phaseCorr,
+                            lostPackets, partialVitCorrections, partialRSCorrections,
+                            droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount);
+
+                    display.show();
+                }
+
+            } catch (SatHelper::SocketException &e) {
+                cerr << endl;
+                cerr << "Client disconnected" << endl;
+                cerr << "   " << e.what() << endl;
+                break;
             }
-
-            // Fix Phase Shift
-            packetFixer.fixPacket(codedData, CODEDFRAMESIZE, phaseShift, false);
-
-            // Viterbi Decode
-            viterbi.decode(codedData, decodedData);
-            float signalErrors = viterbi.GetPercentBER(); // 0 to 16
-            signalErrors = 100 - (signalErrors * 10);
-            uint8_t signalQuality = signalErrors < 0 ? 0 : (uint8_t)signalErrors;
-
-            // DeRandomize Stream
-            uint8_t skipsize = (SYNCWORDSIZE/8);
-            memcpy(vitdecData, decodedData, FRAMESIZE);
-            memcpy(decodedData, decodedData + skipsize, FRAMESIZE-skipsize);
-            deRandomizer.DeRandomize(decodedData, CODEDFRAMESIZE);
-
-            averageVitCorrections += viterbi.GetBER();
-            frameCount++;
-
-            // Reed Solomon Error Correction
-            int32_t derrors[4] = { 0, 0, 0, 0 };
-            for (int i=0; i<RSBLOCKS; i++) {
-              reedSolomon.deinterleave(decodedData, rsWorkBuffer, i, RSBLOCKS);
-              derrors[i] = reedSolomon.decode_ccsds(rsWorkBuffer);
-              reedSolomon.interleave(rsWorkBuffer, rsCorrectedData, i, RSBLOCKS);
-            }
-
-            if (derrors[0] == -1 && derrors[1] == -1 && derrors[2] == -1 && derrors[3] == -1) {
-              droppedPackets++;
-              #ifdef DUMP_CORRUPTED_PACKETS
-              channelWriter.dumpCorruptedPacket(codedData, CODEDFRAMESIZE, 0);
-              channelWriter.dumpCorruptedPacket(vitdecData, FRAMESIZE, 1);
-              channelWriter.dumpCorruptedPacket(rsCorrectedData, FRAMESIZE, 2);
-              channelWriter.dumpCorruptedPacketStatistics(viterbi.GetBER(), corr, derrors);
-              #endif
-              continue;
-            } else {
-              averageRSCorrections += derrors[0] != -1 ? derrors[0] : 0;
-              averageRSCorrections += derrors[1] != -1 ? derrors[1] : 0;
-              averageRSCorrections += derrors[2] != -1 ? derrors[2] : 0;
-              averageRSCorrections += derrors[3] != -1 ? derrors[3] : 0;
-            }
-
-            // Packet Header Filtering
-            //uint8_t versionNumber = (*rsCorrectedData) & 0xC0 >> 6;
-            uint8_t scid = ((*rsCorrectedData) & 0x3F) << 2 | (*(rsCorrectedData+1) & 0xC0) >> 6;
-            uint8_t vcid = (*(rsCorrectedData+1)) & 0x3F;
-
-            // Packet Counter from Packet
-            uint32_t counter = *((uint32_t *) (rsCorrectedData+2));
-            counter = SatHelper::Tools::swapEndianess(counter);
-            counter &= 0xFFFFFF00;
-            counter = counter >> 8;
-            //writeChannel(rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE/8), vcid);
-            channelWriter.writeChannel(rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE/8), vcid);
-
-            if (lastPacketCount[vcid]+1 != counter && lastPacketCount[vcid] > -1) {
-              int lostCount = counter - lastPacketCount[vcid] - 1;
-              lostPackets += lostCount;
-              lostPacketsPerFrame[vcid] += lostCount;
-            }
-
-            lastPacketCount[vcid] = counter;
-            receivedPacketsPerFrame[vcid] = receivedPacketsPerFrame[vcid] == -1 ? 1 : receivedPacketsPerFrame[vcid] + 1;
-            uint8_t phaseCorr = phaseShift == SatHelper::PhaseShift::DEG_180 ? 180 : 0;
-            uint16_t partialVitCorrections = (uint16_t) (averageVitCorrections / frameCount);
-            uint8_t partialRSCorrections = (uint8_t) (averageRSCorrections / frameCount);
-
-            display.update(scid, vcid, (uint64_t) counter, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors,
-                    signalQuality, corr, phaseCorr,
-                    lostPackets, partialVitCorrections, partialRSCorrections,
-                    droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount);
-
-            display.show();
-
-        } catch (SatHelper::SocketException &e) {
-            cerr << endl;
-            cerr << "Client disconnected" << endl;
-            cerr << "   " << e.what() << endl;
-            break;
         }
-    }
 
-    client.Close();
+        client.Close();
+    }
     return 0;
 }

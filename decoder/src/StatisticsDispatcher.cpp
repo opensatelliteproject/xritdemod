@@ -44,9 +44,7 @@ void StatisticsDispatcher::dataThreadLoop() {
         if (clients.size() > 0) {
             for (SatHelper::TcpSocket &client: clients) {
                 try {
-                    std::cout << "sending statistics" << std::endl;
                     client.Send((char *)&statistics.GetData(), sizeof(Statistics_st));
-                    std::cout << "statistics sent" << std::endl;
                 } catch (SatHelper::ClientDisconnectedException &c) {
                     std::cout << "One client has been disconnected." << std::endl;
                     toRemove.push_back(client);

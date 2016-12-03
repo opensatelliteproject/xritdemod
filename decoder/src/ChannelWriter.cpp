@@ -44,7 +44,8 @@ void ChannelWriter::dumpCorruptedPacketStatistics(uint16_t viterbiErrors, uint8_
   SatHelper::Tools::makedir(ss.str());
   ss << SatHelper::Tools::getTimestamp() << ".txt";
   FILE *f = fopen(ss.str().c_str(), "wb");
-  ss = std::stringstream();
+  ss.str(std::string());
+  ss.clear();
   ss << "Viterbi Errors: " << viterbiErrors << std::endl;
   ss << "Sync Correlation: " << (uint32_t) syncCorrelation << std::endl;
   ss << "Reed Solomon Errors: " << rsErrors[0] << ", " << rsErrors[1] << ", " << rsErrors[2] << ", " << rsErrors[3] << std::endl;

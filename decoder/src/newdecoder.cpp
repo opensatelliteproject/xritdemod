@@ -20,6 +20,7 @@
 using namespace std;
 
 #define DUMP_CORRUPTED_PACKETS
+//#define USE_LAST_FRAME_DATA
 
 #define FRAMESIZE 1024
 #define FRAMEBITS (FRAMESIZE * 8)
@@ -30,18 +31,28 @@ using namespace std;
 #define RSPARITYSIZE 32
 #define RSPARITYBLOCK (RSPARITYSIZE * RSBLOCKS)
 #define SYNCWORDSIZE 32
+#define LASTFRAMEDATABITS 64
+#define LASTFRAMEDATA (LASTFRAMEDATABITS / 8)
 #define TIMEOUT 2
 
 const uint64_t UW0 = 0xfca2b63db00d9794;
 const uint64_t UW2 = 0x035d49c24ff2686b;
 
 int main(int argc, char **argv) {
-
-    uint8_t codedData[CODEDFRAMESIZE];
+#ifdef USE_LAST_FRAME_DATA
+    uint8_t viterbiData[CODEDFRAMESIZE + LASTFRAMEDATABITS];
+    uint8_t vitdecData[FRAMESIZE + LASTFRAMEDATA];
+    uint8_t decodedData[FRAMESIZE + LASTFRAMEDATA];
+    uint8_t lastFrameEnd[LASTFRAMEDATABITS];
+    uint8_t viterbiData[CODEDFRAMESIZE];
+#else
     uint8_t vitdecData[FRAMESIZE];
     uint8_t decodedData[FRAMESIZE];
+#endif
+    uint8_t codedData[CODEDFRAMESIZE];
     uint8_t rsCorrectedData[FRAMESIZE];
     uint8_t rsWorkBuffer[255];
+
 
     uint64_t droppedPackets = 0;
     uint64_t averageRSCorrections = 0;
@@ -58,7 +69,11 @@ int main(int argc, char **argv) {
 
     SatHelper::Correlator correlator;
     SatHelper::PacketFixer packetFixer;
+#ifdef USE_LAST_FRAME_DATA
+    SatHelper::Viterbi27 viterbi(FRAMEBITS+LASTFRAMEDATABITS);
+#else
     SatHelper::Viterbi27 viterbi(FRAMEBITS);
+#endif
     SatHelper::ReedSolomon reedSolomon(PARITY_OFFSET);
     SatHelper::DeRandomizer deRandomizer;
     ChannelWriter channelWriter("channels");
@@ -84,6 +99,12 @@ int main(int argc, char **argv) {
       lastPacketCount[i] = -1;
       receivedPacketsPerFrame[i] = -1;
     }
+
+#ifdef USE_LAST_FRAME_DATA
+    for (int i=0; i<LASTFRAMEDATABITS; i++) {
+        lastFrameEnd[i] = 127;
+    }
+#endif
 
     correlator.addWord(UW0);
     correlator.addWord(UW2);
@@ -148,18 +169,35 @@ int main(int argc, char **argv) {
 
                 // Fix Phase Shift
                 packetFixer.fixPacket(codedData, CODEDFRAMESIZE, phaseShift, false);
+#ifdef USE_LAST_FRAME_DATA
+                // Shift data and add previous values.
+                memcpy(viterbiData, lastFrameEnd, LASTFRAMEDATABITS);
+                memcpy(viterbiData+LASTFRAMEDATABITS, codedData, CODEDFRAMESIZE);
+#endif
 
                 // Viterbi Decode
+                //
+#ifdef USE_LAST_FRAME_DATA
+                viterbi.decode(viterbiData, decodedData);
+#else
                 viterbi.decode(codedData, decodedData);
-                float signalErrors = viterbi.GetPercentBER(); // 0 to 16
+#endif
+                float signalErrors = viterbi.GetPercentBER();
                 signalErrors = 100 - (signalErrors * 10);
                 uint8_t signalQuality = signalErrors < 0 ? 0 : (uint8_t)signalErrors;
 
+#ifdef USE_LAST_FRAME_DATA
+                // Shift Back
+                memmove(decodedData, decodedData+LASTFRAMEDATA/2, FRAMESIZE);
+
+                // Save last data
+                memcpy(lastFrameEnd, viterbiData+CODEDFRAMESIZE, LASTFRAMEDATABITS);
+#endif
                 // DeRandomize Stream
                 uint8_t skipsize = (SYNCWORDSIZE/8);
                 memcpy(vitdecData, decodedData, FRAMESIZE);
-                memcpy(decodedData, decodedData + skipsize, FRAMESIZE-skipsize);
-                deRandomizer.DeRandomize(decodedData, CODEDFRAMESIZE);
+                memmove(decodedData, decodedData + skipsize, FRAMESIZE-skipsize);
+                deRandomizer.DeRandomize(decodedData, FRAMESIZE-skipsize);
 
                 averageVitCorrections += viterbi.GetBER();
                 frameCount++;

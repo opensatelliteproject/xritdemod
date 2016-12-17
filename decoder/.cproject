@@ -42,6 +42,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.1280141572" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.187519753" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="SatHelper"/>
+									<listOptionValue builtIn="false" value="correct"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.26460144" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -105,6 +106,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.1923068009" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
 								<option id="gnu.cpp.link.option.libs.359951815" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="SatHelper"/>
+									<listOptionValue builtIn="false" value="correct"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.2019954056" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -168,7 +170,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.release.1856628510" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.release">
 								<option id="gnu.cpp.link.option.libs.1782123948" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="SatHelper"/>
-									<listOptionValue builtIn="false" value="fec"/>
+									<listOptionValue builtIn="false" value="correct"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.159557074" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -212,6 +214,7 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="Release Static"/>
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/decoder"/>
 		</configuration>

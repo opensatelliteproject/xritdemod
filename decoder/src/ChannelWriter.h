@@ -19,6 +19,7 @@ public:
     void writeChannel(uint8_t *data, int size, uint16_t vcid);
     void dumpCorruptedPacket(uint8_t *data, int size, int type);
     void dumpCorruptedPacketStatistics(uint16_t viterbiErrors, uint8_t syncCorrelation, int32_t *rsErrors);
+    void dumpDebugData(uint8_t *data, int size, int type);
 };
 
 #endif /* CHANNELWRITTER_H_ */

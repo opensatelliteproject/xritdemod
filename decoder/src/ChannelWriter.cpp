@@ -37,6 +37,17 @@ void ChannelWriter::dumpCorruptedPacket(uint8_t *data, int size, int type) {
   fclose(f);
 }
 
+void ChannelWriter::dumpDebugData(uint8_t *data, int size, int type) {
+    std::stringstream ss;
+    SatHelper::Tools::makedir(baseFolder);
+    ss << baseFolder << "/debug/";
+    SatHelper::Tools::makedir(ss.str());
+    ss << "debug-" << size << "-" << type;
+    FILE *f = fopen(ss.str().c_str(), "a+");
+    fwrite(data, size, 1, f);
+    fclose(f);
+}
+
 void ChannelWriter::dumpCorruptedPacketStatistics(uint16_t viterbiErrors, uint8_t syncCorrelation, int32_t *rsErrors) {
   std::stringstream ss;
   SatHelper::Tools::makedir(baseFolder);

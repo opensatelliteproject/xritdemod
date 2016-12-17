@@ -19,12 +19,12 @@
 
 using namespace std;
 
-#define DUMP_CORRUPTED_PACKETS
-//#define USE_LAST_FRAME_DATA
+//#define DUMP_CORRUPTED_PACKETS
+#define USE_LAST_FRAME_DATA
+//#define DEBUG_MODE
 
 #define FRAMESIZE 1024
 #define FRAMEBITS (FRAMESIZE * 8)
-#define PARITY_OFFSET 892
 #define CODEDFRAMESIZE (FRAMEBITS * 2)
 #define MINCORRELATIONBITS 46
 #define RSBLOCKS 4
@@ -44,10 +44,10 @@ int main(int argc, char **argv) {
     uint8_t vitdecData[FRAMESIZE + LASTFRAMEDATA];
     uint8_t decodedData[FRAMESIZE + LASTFRAMEDATA];
     uint8_t lastFrameEnd[LASTFRAMEDATABITS];
-    uint8_t viterbiData[CODEDFRAMESIZE];
 #else
     uint8_t vitdecData[FRAMESIZE];
     uint8_t decodedData[FRAMESIZE];
+    //uint8_t viterbiData[CODEDFRAMESIZE];
 #endif
     uint8_t codedData[CODEDFRAMESIZE];
     uint8_t rsCorrectedData[FRAMESIZE];
@@ -74,11 +74,13 @@ int main(int argc, char **argv) {
 #else
     SatHelper::Viterbi27 viterbi(FRAMEBITS);
 #endif
-    SatHelper::ReedSolomon reedSolomon(PARITY_OFFSET);
+    SatHelper::ReedSolomon reedSolomon;
     SatHelper::DeRandomizer deRandomizer;
     ChannelWriter channelWriter("channels");
 
     Display display;
+
+    reedSolomon.SetCopyParityToOutput(true);
 
     if (argc > 1) {
         std::string ui(argv[1]);
@@ -102,7 +104,7 @@ int main(int argc, char **argv) {
 
 #ifdef USE_LAST_FRAME_DATA
     for (int i=0; i<LASTFRAMEDATABITS; i++) {
-        lastFrameEnd[i] = 127;
+        lastFrameEnd[i] = 128;
     }
 #endif
 
@@ -185,7 +187,7 @@ int main(int argc, char **argv) {
                 float signalErrors = viterbi.GetPercentBER();
                 signalErrors = 100 - (signalErrors * 10);
                 uint8_t signalQuality = signalErrors < 0 ? 0 : (uint8_t)signalErrors;
-
+                printf("Viterbi Errors: %d\n", viterbi.GetBER());
 #ifdef USE_LAST_FRAME_DATA
                 // Shift Back
                 memmove(decodedData, decodedData+LASTFRAMEDATA/2, FRAMESIZE);
@@ -193,6 +195,7 @@ int main(int argc, char **argv) {
                 // Save last data
                 memcpy(lastFrameEnd, viterbiData+CODEDFRAMESIZE, LASTFRAMEDATABITS);
 #endif
+
                 // DeRandomize Stream
                 uint8_t skipsize = (SYNCWORDSIZE/8);
                 memcpy(vitdecData, decodedData, FRAMESIZE);

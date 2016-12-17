@@ -49,16 +49,16 @@ void StatisticsDispatcher::dataThreadLoop() {
                     std::cout << "One client has been disconnected." << std::endl;
                     toRemove.push_back(client);
                     client.Close();
-                } catch (SatHelper::SocketException &e) {
-                    std::cout << "There was an exception for a client: " << e.reason() << std::endl;
-                    toRemove.push_back(client);
-                    client.Close();
                 } catch (SatHelper::NotAllDataSentException &e) {
                     std::cout << "Not all data sent" << std::endl;
                     toRemove.push_back(client);
                     client.Close();
                 } catch (SatHelper::SocketWriteException &e) {
                     std::cout << "Socket Write Exception" << std:: endl;
+                    toRemove.push_back(client);
+                    client.Close();
+                } catch (SatHelper::SocketException &e) {
+                    std::cout << "There was an exception for a client: " << e.reason() << std::endl;
                     toRemove.push_back(client);
                     client.Close();
                 }

@@ -29,7 +29,6 @@ void ChannelDispatcher::add(char *data, int length) {
     dataMutex.unlock();
 }
 
-
 void ChannelDispatcher::dataThreadLoop() {
     std::chrono::milliseconds timespan(LOOP_DELAY);
     std::vector<SatHelper::TcpSocket> toRemove;
@@ -51,7 +50,7 @@ void ChannelDispatcher::dataThreadLoop() {
         if (dataQueue.size() > 0) {
             ChannelPacket *packet = dataQueue.front();
             if (clients.size() > 0) {
-                for (SatHelper::TcpSocket &client: clients) {
+                for (SatHelper::TcpSocket &client : clients) {
                     try {
                         client.Send(packet->data, packet->length);
                     } catch (SatHelper::ClientDisconnectedException &c) {
@@ -69,15 +68,9 @@ void ChannelDispatcher::dataThreadLoop() {
         dataMutex.unlock();
 
         // Process dropped clients
-        for(SatHelper::TcpSocket &s: toRemove) {
-            clients.erase(
-                    std::remove_if(
-                            clients.begin(),
-                            clients.end(),
-                            [&s](SatHelper::TcpSocket &x) { return x.GetSocketFD() == s.GetSocketFD(); }
-                    ),
-                    clients.end()
-         );
+        for (SatHelper::TcpSocket &s : toRemove) {
+            clients.erase(std::remove_if(clients.begin(), clients.end(), [&s](SatHelper::TcpSocket &x) {return x.GetSocketFD() == s.GetSocketFD();}),
+                    clients.end());
         }
         toRemove.clear();
         std::this_thread::sleep_for(timespan);

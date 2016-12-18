@@ -27,7 +27,7 @@ void StatisticsDispatcher::dataThreadLoop() {
     std::chrono::milliseconds timespan(LOOP_DELAY);
     std::vector<SatHelper::TcpSocket> toRemove;
 
-    std::cout << "Starting Statistics Dispatcher at port 5002" << std::endl;
+    std::cout << "Starting Statistics Dispatcher at port 5002\n";
     server.Listen(5002, true);
 
     while (running) {
@@ -46,15 +46,15 @@ void StatisticsDispatcher::dataThreadLoop() {
                 try {
                     client.Send((char *)&statistics.GetData(), sizeof(Statistics_st));
                 } catch (SatHelper::ClientDisconnectedException &c) {
-                    std::cout << "One client has been disconnected." << std::endl;
+                    std::cout << "One client has been disconnected.\n";
                     toRemove.push_back(client);
                     client.Close();
                 } catch (SatHelper::NotAllDataSentException &e) {
-                    std::cout << "Not all data sent" << std::endl;
+                    std::cout << "Not all data sent\n";
                     toRemove.push_back(client);
                     client.Close();
                 } catch (SatHelper::SocketWriteException &e) {
-                    std::cout << "Socket Write Exception" << std:: endl;
+                    std::cout << "Socket Write Exception\n";
                     toRemove.push_back(client);
                     client.Close();
                 } catch (SatHelper::SocketException &e) {

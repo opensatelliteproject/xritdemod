@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     uint8_t rsCorrectedData[FRAMESIZE];
     uint8_t rsWorkBuffer[255];
 
-
+    uint8_t  syncWord[4];
     uint64_t droppedPackets = 0;
     uint64_t averageRSCorrections = 0;
     uint64_t averageVitCorrections = 0;
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 
     // Socket Init
     SatHelper::TcpServer tcpServer;
-    cout << "Starting Demod Receiver at port 5000" << endl;
+    cout << "Starting Demod Receiver at port 5000\n";
     tcpServer.Listen(5000);
 
     while (true) {
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
                 SatHelper::PhaseShift phaseShift = word == 0 ? SatHelper::PhaseShift::DEG_0 : SatHelper::PhaseShift::DEG_180;
 
                 if (corr < MINCORRELATIONBITS) {
-                    cerr << "Correlation didn't match criteria of " << MINCORRELATIONBITS << " bits." << std::endl;
+                    cerr << "Correlation didn't match criteria of " << MINCORRELATIONBITS << " bits." << endl;
                     continue;
                 }
 
@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
                 float signalErrors = viterbi.GetPercentBER();
                 signalErrors = 100 - (signalErrors * 10);
                 uint8_t signalQuality = signalErrors < 0 ? 0 : (uint8_t)signalErrors;
-                printf("Viterbi Errors: %d\n", viterbi.GetBER());
+
 #ifdef USE_LAST_FRAME_DATA
                 // Shift Back
                 memmove(decodedData, decodedData+LASTFRAMEDATA/2, FRAMESIZE);
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
                 // Save last data
                 memcpy(lastFrameEnd, viterbiData+CODEDFRAMESIZE, LASTFRAMEDATABITS);
 #endif
-
+                memcpy(syncWord, decodedData, 4);
                 // DeRandomize Stream
                 uint8_t skipsize = (SYNCWORDSIZE/8);
                 memcpy(vitdecData, decodedData, FRAMESIZE);
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
                 statistics.update(scid, vcid, (uint64_t) counter, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors,
                         signalQuality, corr, phaseCorr,
                         lostPackets, partialVitCorrections, partialRSCorrections,
-                        droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount);
+                        droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, syncWord);
 
                 statisticsDispatcher.Update(statistics);
 

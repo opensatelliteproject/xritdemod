@@ -34,7 +34,7 @@ void ChannelDispatcher::dataThreadLoop() {
     std::chrono::milliseconds timespan(LOOP_DELAY);
     std::vector<SatHelper::TcpSocket> toRemove;
 
-    std::cout << "Starting Channel Dispatcher at port 5001" << std::endl;
+    std::cout << "Starting Channel Dispatcher at port 5001\n";
     server.Listen(5001, true);
 
     while (running) {
@@ -55,7 +55,7 @@ void ChannelDispatcher::dataThreadLoop() {
                     try {
                         client.Send(packet->data, packet->length);
                     } catch (SatHelper::ClientDisconnectedException &c) {
-                        std::cout << "One client has been disconnected." << std::endl;
+                        std::cout << "One client has been disconnected.\n";
                         toRemove.push_back(client);
                     } catch (SatHelper::SocketException &e) {
                         std::cout << "There was an exception for a client: " << e.reason() << std::endl;

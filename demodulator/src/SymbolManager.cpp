@@ -103,7 +103,7 @@ void SymbolManager::add(float *data, int length) {
 void SymbolManager::add(std::complex<float> *data, int length) {
 	dataMutex.lock();
 	for (int i = 0; i < length; i++) {
-		dataQueue.push(data[i].real());
+		dataQueue.push(data[i].imag());
 	}
 	dataMutex.unlock();
 }

@@ -118,10 +118,6 @@ void onSamplesAvailable(void *fdata, int length) {
 
 	symbolManager.add(clockRecoveryData, symbols);
 
-	FILE *f = fopen("test.bin", "wb");
-	fwrite(clockRecoveryData, sizeof(std::complex<float>), symbols, f);
-	fclose(f);
-
 	// Temporary Testing
 	tttc++;
 	if (tttc == 100) {
@@ -162,7 +158,7 @@ int main(int argc, char **argv) {
 	std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
 
 	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE, RRC_ALPHA, RRC_TAPS);
-	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::BLACKMAN_HARRIS, 6.76);
+	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
 
 	decimator = new FirFilter(BASE_DECIMATION, decimatorTaps);
 	agc = new AGC(0.01, 0.5, 1, 4000);

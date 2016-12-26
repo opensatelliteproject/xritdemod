@@ -24,19 +24,25 @@ class SymbolManager {
 private:
     std::queue<float> dataQueue;
     std::mutex dataMutex;
-    std::thread *dataThread;
-
-    std::atomic_bool running;
-    void dataThreadLoop();
     SatHelper::TcpClient client;
     char *buffer;
     int inBufferLength;
+    bool isConnected;
 
 public:
 	SymbolManager();
 	virtual ~SymbolManager();
     void add(float *data, int length);
     void add(std::complex<float> *data, int length);
+    void process();
+
+    inline int symbolsInQueue() {
+    	int s;
+    	dataMutex.lock();
+    	s = dataQueue.size();
+    	dataMutex.unlock();
+    	return s;
+    }
 };
 
 } /* namespace OpenSatelliteProject */

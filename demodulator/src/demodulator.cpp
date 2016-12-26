@@ -25,7 +25,7 @@ using namespace SatHelper;
 #define LOOP_ORDER 2
 #define SYMBOL_RATE 293883
 #define RRC_ALPHA 0.5
-#define RRC_TAPS 361
+#define RRC_TAPS 63
 #define PLL_ALPHA 0.025
 #define CLOCK_ALPHA 0.0037
 #define CLOCK_MU 0.5
@@ -54,8 +54,6 @@ std::complex<float> *agcData = NULL;
 std::complex<float> *rrcData = NULL;
 std::complex<float> *costasData = NULL;
 std::complex<float> *clockRecoveryData = NULL;
-
-int tttc = 0;
 
 void onSamplesAvailable(void *fdata, int length) {
 	float *data = (float *) fdata;
@@ -117,12 +115,6 @@ void onSamplesAvailable(void *fdata, int length) {
 	int symbols = clockRecovery->Work(costasData, clockRecoveryData, length);
 
 	symbolManager.add(clockRecoveryData, symbols);
-
-	// Temporary Testing
-	tttc++;
-	if (tttc == 100) {
-		running = false;
-	}
 }
 
 int main(int argc, char **argv) {
@@ -156,9 +148,10 @@ int main(int argc, char **argv) {
 
 	std::cout << "Samples per Symbol: " << sps << std::endl;
 	std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
+	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate / 2 << std::endl;
 
 	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE, RRC_ALPHA, RRC_TAPS);
-	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
+	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
 
 	decimator = new FirFilter(BASE_DECIMATION, decimatorTaps);
 	agc = new AGC(0.01, 0.5, 1, 4000);
@@ -168,16 +161,20 @@ int main(int argc, char **argv) {
 
 	airspy.SetCenterFrequency(CENTER_FREQUENCY);
 	airspy.SetAGC(false);
+	airspy.SetMixerGain(15);
 	airspy.SetLNAGain(15);
 	airspy.SetVGAGain(15);
-	airspy.SetMixerGain(15);
 
 	std::cout << "Starting Airspy" << std::endl;
 	airspy.Start();
 	running = true;
 
 	while (running) {
-
+		int siq = symbolManager.symbolsInQueue();
+		if (siq > 0) {
+			symbolManager.process();
+		}
+		usleep(10);	// Let's not waste CPU time
 	}
 
 	std::cout << "Stopping Airspy" << std::endl;

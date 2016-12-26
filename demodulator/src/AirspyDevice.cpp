@@ -57,7 +57,9 @@ AirspyDevice::AirspyDevice() {
 		partNumber = ss.str();
 		std::cout << "  Part Number: " << partNumber << std::endl;
 
-		ss = std::stringstream();
+		ss.str( std::string() );
+		ss.clear();
+
 		ss << "0x" << std::hex << ser.serial_no[2] << std::hex
 				<< ser.serial_no[3];
 		serialNumber = ss.str();
@@ -78,7 +80,8 @@ AirspyDevice::AirspyDevice() {
 			availableSampleRates.push_back(sampleRates[i]);
 		}
 		delete sampleRates;
-		ss = std::stringstream();
+		ss.str( std::string() );
+		ss.clear();
 		ss << "AirSpy(" << (int) boardId << ") - " << ser.serial_no[2]
 				<< ser.serial_no[3];
 		name = ss.str();

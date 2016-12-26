@@ -48,73 +48,49 @@ bool running;
 int sampleDataLength = 0;
 
 // Flow Buffers
-std::complex<float> *sampleData = NULL;
-std::complex<float> *decimatorData = NULL;
-std::complex<float> *agcData = NULL;
-std::complex<float> *rrcData = NULL;
-std::complex<float> *costasData = NULL;
-std::complex<float> *clockRecoveryData = NULL;
+std::complex<float> *buffer0 = NULL;
+std::complex<float> *buffer1 = NULL;
 
 void onSamplesAvailable(void *fdata, int length) {
 	float *data = (float *) fdata;
 	if (sampleDataLength != length) {
 		std::cout << "Allocating Sample Buffer with size " << length
 				<< " (it was " << sampleDataLength << " before)" << std::endl;
-		if (sampleData != NULL) {
-			delete sampleData;
+		if (buffer0 != NULL) {
+			delete buffer0;
 		}
 
-		if (agcData != NULL) {
-			delete agcData;
+		if (buffer1 != NULL) {
+			delete buffer1;
 		}
 
-		if (rrcData != NULL) {
-			delete rrcData;
-		}
-
-		if (costasData != NULL) {
-			delete costasData;
-		}
-
-		if (clockRecoveryData != NULL) {
-			delete clockRecoveryData;
-		}
-
-		if (decimatorData != NULL) {
-			delete decimatorData;
-		}
-
-		sampleData = new std::complex<float>[length];
-		agcData = new std::complex<float>[length / BASE_DECIMATION];
-		costasData = new std::complex<float>[length / BASE_DECIMATION];
-		clockRecoveryData = new std::complex<float>[length / BASE_DECIMATION];
-		rrcData = new std::complex<float>[length / BASE_DECIMATION];
-		decimatorData = new std::complex<float>[length / BASE_DECIMATION];
+		buffer0 = new std::complex<float>[length];
+		buffer1 = new std::complex<float>[length];
 		sampleDataLength = length;
 	}
 
 	// Convert Interleaved Float IQ to Complex
 	for (int i = 0; i < length; i++) {
-		sampleData[i] = std::complex<float>(data[i * 2], data[i * 2 + 1]);
+		buffer0[i] = std::complex<float>(data[i * 2], data[i * 2 + 1]);
 	}
 
 	// Decimation / Lowpass
 	length /= BASE_DECIMATION;
-	decimator->Work(sampleData, decimatorData, length);
+	decimator->Work(buffer0, buffer1, length);
 
 	// Automatic Gain Control
-	agc->Work(decimatorData, agcData, length);
+	agc->Work(buffer1, buffer0, length);
 
 	// Filter
-	rrcFilter->Work(agcData, rrcData, length);
+	rrcFilter->Work(buffer0, buffer1, length);
 
 	// Costas Loop
-	costasLoop->Work(rrcData, costasData, length);
+	costasLoop->Work(buffer1, buffer0, length);
 
 	// Clock Recovery
-	int symbols = clockRecovery->Work(costasData, clockRecoveryData, length);
+	int symbols = clockRecovery->Work(buffer0, buffer1, length);
 
-	symbolManager.add(clockRecoveryData, symbols);
+	symbolManager.add(buffer1, symbols);
 }
 
 int main(int argc, char **argv) {

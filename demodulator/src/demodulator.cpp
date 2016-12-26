@@ -31,6 +31,10 @@ using namespace SatHelper;
 #define CLOCK_MU 0.5
 #define CLOCK_OMEGA_LIMIT 0.005
 #define CLOCK_GAIN_OMEGA (CLOCK_ALPHA * CLOCK_ALPHA) / 4.0
+#define AGC_RATE 0.01
+#define AGC_REFERENCE 0.5
+#define AGC_GAIN 1
+#define AGC_MAX_GAIN 4000
 
 // Use 2 for 2.5Msps on Airspy R2 and 3.0Msps on Airspy Mini
 #define BASE_DECIMATION 2
@@ -124,13 +128,13 @@ int main(int argc, char **argv) {
 
 	std::cout << "Samples per Symbol: " << sps << std::endl;
 	std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
-	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate / 2 << std::endl;
+	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate << std::endl;
 
 	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE, RRC_ALPHA, RRC_TAPS);
 	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
 
 	decimator = new FirFilter(BASE_DECIMATION, decimatorTaps);
-	agc = new AGC(0.01, 0.5, 1, 4000);
+	agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
 	costasLoop = new CostasLoop(PLL_ALPHA, LOOP_ORDER);
 	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU, CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
 	rrcFilter = new FirFilter(1, rrcTaps);

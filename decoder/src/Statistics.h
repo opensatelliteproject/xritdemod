@@ -17,7 +17,7 @@ struct Statistics_st {
     uint64_t packetNumber;
     uint16_t vitErrors;
     uint16_t frameBits;
-    uint32_t rsErrors[4];
+    int32_t rsErrors[4];
     uint8_t signalQuality;
     uint8_t syncCorrelation;
     uint8_t phaseCorrection;
@@ -30,6 +30,7 @@ struct Statistics_st {
     uint64_t totalPackets;
     uint32_t startTime;
     uint8_t syncWord[4];
+    uint8_t frameLock;
 };
 #pragma pack(pop)
 
@@ -43,7 +44,7 @@ public:
 
     void update(uint8_t scid, uint8_t vcid, uint64_t packetNumber, uint16_t vitErrors, uint16_t frameBits, int32_t *rsErrors, uint8_t signalQuality,
             uint8_t syncCorrelation, uint8_t phaseCorrection, uint64_t lostPackets, uint16_t averageVitCorrections, uint8_t averageRSCorrections,
-            uint64_t droppedPackets, int64_t *receivedPacketsPerChannel, int64_t *lostPacketsPerChannel, uint64_t totalPackets, uint8_t *syncWord);
+            uint64_t droppedPackets, int64_t *receivedPacketsPerChannel, int64_t *lostPacketsPerChannel, uint64_t totalPackets, uint8_t *syncWord, bool frameLock);
 
     void update(const Statistics &statistics);
 

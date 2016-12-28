@@ -32,6 +32,11 @@ Display::Display() {
     }
     this->totalPackets = 0;
     this->startTime = SatHelper::Tools::getTimestamp();
+    this->lock = false;
+    this->syncWord[0] = 0;
+    this->syncWord[1] = 0;
+    this->syncWord[2] = 0;
+    this->syncWord[3] = 0;
 }
 
 Display::~Display() {
@@ -42,25 +47,33 @@ void Display::show() {
     int runningTime = SatHelper::Tools::getTimestamp() - startTime;
     screenManager.GotoXY(0, 0);
     std::cout << "┌─────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-    std::cout << "|                         LRIT DECODER - Lucas Teske                          |" << std::endl;
+    std::cout << "|                    LRIT DECODER - Open Satellite Project                    |" << std::endl;
     std::cout << "|─────────────────────────────────────────────────────────────────────────────|" << std::endl;
     std::cout << "|         Current Frame Data           |               Statistics             |" << std::endl;
     std::cout << "|──────────────────────────────────────|──────────────────────────────────────|" << std::endl;
-    std::cout << "|                                      |                                      |" << std::endl;
-    std::cout << "| SC ID:                           " << std::setw(3) << (uint32_t)scid << " |  Total Lost Packets:    " << std::setw(10) << lostPackets << "   |"
-            << std::endl;
-    std::cout << "| VC ID:                           " << std::setw(3) << (uint32_t)vcid << " |  Average Viterbi Correction:  " << std::setw(4) << averageVitCorrections
+    std::cout << "| SC ID:                           " << std::setw(3) << (uint32_t) scid << " |  Total Lost Packets:    " << std::setw(10) << lostPackets
             << "   |" << std::endl;
+    std::cout << "| VC ID:                           " << std::setw(3) << (uint32_t) vcid << " |  Average Viterbi Correction:  " << std::setw(4)
+            << averageVitCorrections << "   |" << std::endl;
     std::cout << "| Packet Number:            " << std::setw(10) << packetNumber << " |  Average RS Correction:         " << std::setw(2)
             << (uint32_t) averageRSCorrections << "   |" << std::endl;
     std::cout << "| Viterbi Errors:       " << std::setw(4) << vitErrors << "/" << std::setw(4) << frameBits << " bits |  Total Dropped Packets: "
             << std::setw(10) << droppedPackets << "   |" << std::endl;
-    std::cout << "| Signal Quality:                 " << std::setw(3) << (uint32_t)signalQuality << "% |  Total Packets:         " << std::setw(10) << totalPackets
-            << "   |" << std::endl;
+    std::cout << "| Signal Quality:                 " << std::setw(3) << (uint32_t) signalQuality << "% |  Total Packets:         " << std::setw(10)
+            << totalPackets << "   |" << std::endl;
+    std::cout << "| Frame Lock:                    " << std::setw(5) << (lock ? "TRUE" : "FALSE") << " |  Sync Word:               " << std::setfill('0')
+            << std::setw(2) << std::hex << (int) syncWord[0] << std::setfill('0') << std::setw(2) << std::hex << (int) syncWord[1] << std::setfill('0')
+            << std::setw(2) << std::hex << (int) syncWord[2] << std::setfill('0') << std::setw(2) << std::hex << (int) syncWord[3] << "   |" << std::endl;
+
+    // Reset cout
+    std::cout << std::dec << std::setfill(' ');
+
     std::cout << "| RS Errors:               " << std::setw(2) << rsErrors[0] << " " << std::setw(2) << rsErrors[1] << " " << std::setw(2) << rsErrors[2] << " "
             << std::setw(2) << rsErrors[3] << " |──────────────────────────────────────|" << std::endl;
-    std::cout << "| Sync Correlation:                 " << std::setw(2) << (uint32_t)syncCorrelation << " |             Channel Data             |" << std::endl;
-    std::cout << "| Phase Correction:                " << std::setw(3) << (uint32_t)phaseCorrection << " |──────────────────────────────────────|" << std::endl;
+    std::cout << "| Sync Correlation:                 " << std::setw(2) << (uint32_t) syncCorrelation << " |             Channel Data             |"
+            << std::endl;
+    std::cout << "| Phase Correction:                " << std::setw(3) << (uint32_t) phaseCorrection << " |──────────────────────────────────────|"
+            << std::endl;
     std::cout << "| Running Time:             " << std::setw(10) << runningTime << " |  Chan  |   Received   |     Lost     |" << std::endl;
 
     int maxChannels = 8;
@@ -86,7 +99,7 @@ void Display::show() {
 
 void Display::update(uint8_t scid, uint8_t vcid, uint64_t packetNumber, uint16_t vitErrors, uint16_t frameBits, int32_t *rsErrors, uint8_t signalQuality,
         uint8_t syncCorrelation, uint8_t phaseCorrection, uint64_t lostPackets, uint16_t averageVitCorrections, uint8_t averageRSCorrections,
-        uint64_t droppedPackets, int64_t *receivedPacketsPerChannel, int64_t *lostPacketsPerChannel, uint64_t totalPackets) {
+        uint64_t droppedPackets, int64_t *receivedPacketsPerChannel, int64_t *lostPacketsPerChannel, uint64_t totalPackets, uint8_t *syncWord, bool lock) {
 
     this->scid = scid;
     this->vcid = vcid;
@@ -96,6 +109,7 @@ void Display::update(uint8_t scid, uint8_t vcid, uint64_t packetNumber, uint16_t
 
     for (int i = 0; i < 4; i++) {
         this->rsErrors[i] = rsErrors[i];
+        this->syncWord[i] = syncWord[i];
     }
 
     this->signalQuality = signalQuality;
@@ -110,4 +124,5 @@ void Display::update(uint8_t scid, uint8_t vcid, uint64_t packetNumber, uint16_t
         this->lostPacketsPerChannel[i] = lostPacketsPerChannel[i];
     }
     this->totalPackets = totalPackets;
+    this->lock = lock;
 }

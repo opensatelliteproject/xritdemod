@@ -55,6 +55,8 @@ int sampleDataLength = 0;
 std::complex<float> *buffer0 = NULL;
 std::complex<float> *buffer1 = NULL;
 
+uint32_t startTime = 0;
+
 void onSamplesAvailable(void *fdata, int length) {
 	float *data = (float *) fdata;
 	if (sampleDataLength != length) {
@@ -123,20 +125,26 @@ int main(int argc, char **argv) {
 
 	airspy.SetSamplesAvailableCallback(onSamplesAvailable);
 
-	float circuitSampleRate = airspy.GetSampleRate() / ((float) BASE_DECIMATION);
+	float circuitSampleRate = airspy.GetSampleRate()
+			/ ((float) BASE_DECIMATION);
 	float sps = circuitSampleRate / ((float) SYMBOL_RATE);
 
 	std::cout << "Samples per Symbol: " << sps << std::endl;
 	std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
-	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate << std::endl;
+	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate
+			<< std::endl;
 
-	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE, RRC_ALPHA, RRC_TAPS);
-	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
+	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE,
+			RRC_ALPHA, RRC_TAPS);
+	std::vector<float> decimatorTaps = Filters::lowPass(1,
+			airspy.GetSampleRate(), circuitSampleRate, 100e3,
+			FFTWindows::WindowType::HAMMING, 6.76);
 
 	decimator = new FirFilter(BASE_DECIMATION, decimatorTaps);
 	agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
 	costasLoop = new CostasLoop(PLL_ALPHA, LOOP_ORDER);
-	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU, CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
+	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU,
+			CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
 	rrcFilter = new FirFilter(1, rrcTaps);
 
 	airspy.SetCenterFrequency(CENTER_FREQUENCY);

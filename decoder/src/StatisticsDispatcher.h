@@ -17,11 +17,8 @@
 class StatisticsDispatcher {
 private:
     Statistics statistics;
-    std::mutex dataMutex;
-    std::thread *dataThread;
     std::vector<SatHelper::TcpSocket> clients;
 
-    std::atomic_bool running;
     void dataThreadLoop();
     SatHelper::TcpServer server;
 public:
@@ -29,10 +26,10 @@ public:
     ~StatisticsDispatcher();
 
     inline void Update(const Statistics &statistics) {
-        dataMutex.lock();
         this->statistics.update(statistics);
-        dataMutex.unlock();
     }
+
+    void Work();
 };
 
 #endif /* STATISTICSDISPATCHER_H_ */

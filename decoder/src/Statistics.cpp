@@ -2,7 +2,7 @@
  * Statistics.cpp
  *
  *  Created on: 01/12/2016
- *      Author: lucas
+ *      Author: Lucas Teske
  */
 
 #include "Statistics.h"
@@ -39,6 +39,7 @@ Statistics::Statistics() {
     for (int i = 0; i < 4; i++) {
         this->data.syncWord[i] = 0;
     }
+    this->data.frameLock = 0;
 }
 
 Statistics::~Statistics() {
@@ -51,7 +52,7 @@ void Statistics::update(const Statistics &statistics) {
 
 void Statistics::update(uint8_t scid, uint8_t vcid, uint64_t packetNumber, uint16_t vitErrors, uint16_t frameBits, int32_t *rsErrors, uint8_t signalQuality,
         uint8_t syncCorrelation, uint8_t phaseCorrection, uint64_t lostPackets, uint16_t averageVitCorrections, uint8_t averageRSCorrections,
-        uint64_t droppedPackets, int64_t *receivedPacketsPerChannel, int64_t *lostPacketsPerChannel, uint64_t totalPackets, uint8_t *syncWord) {
+        uint64_t droppedPackets, int64_t *receivedPacketsPerChannel, int64_t *lostPacketsPerChannel, uint64_t totalPackets, uint8_t *syncWord, bool frameLock) {
 
     this->data.scid = scid;
     this->data.vcid = vcid;
@@ -78,4 +79,5 @@ void Statistics::update(uint8_t scid, uint8_t vcid, uint64_t packetNumber, uint1
     for (int i = 0; i < 4; i++) {
         this->data.syncWord[i] = syncWord[i];
     }
+    this->data.frameLock = (uint8_t) frameLock;
 }

@@ -16,6 +16,7 @@
 #include "AirspyDevice.h"
 #include "SymbolManager.h"
 #include "sathelper.h"
+#include "SampleFIFO.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
@@ -36,6 +37,10 @@ using namespace SatHelper;
 #define AGC_GAIN 1
 #define AGC_MAX_GAIN 4000
 
+// FIFO Size in Samples
+// 256 * 1024 samples is about 1Mb of ram.
+#define FIFO_SIZE (256 * 1024)
+
 // Use 2 for 2.5Msps on Airspy R2 and 3.0Msps on Airspy Mini
 #define BASE_DECIMATION 2
 
@@ -45,6 +50,7 @@ ClockRecovery *clockRecovery;
 FirFilter *rrcFilter;
 FirFilter *decimator;
 SymbolManager symbolManager;
+SampleFIFO samplesFifo(FIFO_SIZE);
 
 bool running;
 
@@ -59,6 +65,10 @@ uint32_t startTime = 0;
 
 void onSamplesAvailable(void *fdata, int length) {
 	float *data = (float *) fdata;
+	samplesFifo.addSamples(data, length * 2);
+}
+
+void checkAndResizeBuffers(int length) {
 	if (sampleDataLength != length) {
 		std::cout << "Allocating Sample Buffer with size " << length
 				<< " (it was " << sampleDataLength << " before)" << std::endl;
@@ -74,11 +84,32 @@ void onSamplesAvailable(void *fdata, int length) {
 		buffer1 = new std::complex<float>[length];
 		sampleDataLength = length;
 	}
+}
+
+void processSamples() {
+	int length;
+
+	if (samplesFifo.isOverflow()) {
+		std::cerr << "Input Samples Fifo is overflowing!" << std::endl;
+	}
+
+	if (!samplesFifo.containsSamples()) {
+		// No data
+		return;
+	}
+
+	// Do unsafe locks and copy queue for the buffer;
+	samplesFifo.unsafe_lockMutex();
+	length = samplesFifo.size() / 2;
+	checkAndResizeBuffers(length);
 
 	// Convert Interleaved Float IQ to Complex
-	for (int i = 0; i < length; i++) {
-		buffer0[i] = std::complex<float>(data[i * 2], data[i * 2 + 1]);
+	for (int i=0; i<length; i++) {
+		float I = samplesFifo.unsafe_takeSample();
+		float Q = samplesFifo.unsafe_takeSample();
+		buffer0[i] = std::complex<float>(I, Q);
 	}
+	samplesFifo.unsafe_unlockMutex();
 
 	// Decimation / Lowpass
 	length /= BASE_DECIMATION;
@@ -158,6 +189,7 @@ int main(int argc, char **argv) {
 	running = true;
 
 	while (running) {
+		processSamples();
 		int siq = symbolManager.symbolsInQueue();
 		if (siq > 0) {
 			symbolManager.process();

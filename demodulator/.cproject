@@ -31,6 +31,7 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1348803267" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.warnings.pedantic.2025753002" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="false" valueType="boolean"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1368866537" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.639949404" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1361537906" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -38,8 +39,11 @@
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.1942048995" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.dialect.std.1734745185" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.c99" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.misc.pic.718437536" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" value="true" valueType="boolean"/>
-								<option id="gnu.c.compiler.option.include.files.2089271146" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" valueType="includeFiles"/>
-								<option id="gnu.c.compiler.option.include.paths.206058820" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+								<option id="gnu.c.compiler.option.include.files.2089271146" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files"/>
+								<option id="gnu.c.compiler.option.include.paths.206058820" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1217945153" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1936266235" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1656367129" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
@@ -96,6 +100,7 @@
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes"/>
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes/exceptions"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1801084404" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1926693565" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.707660865" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
@@ -103,8 +108,11 @@
 								<option id="gnu.c.compiler.exe.release.option.debugging.level.805018525" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.dialect.std.1120517253" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.c99" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.misc.pic.1930630562" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" value="true" valueType="boolean"/>
-								<option id="gnu.c.compiler.option.include.files.242397493" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" valueType="includeFiles"/>
-								<option id="gnu.c.compiler.option.include.paths.884637924" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+								<option id="gnu.c.compiler.option.include.files.242397493" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files"/>
+								<option id="gnu.c.compiler.option.include.paths.884637924" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1165698555" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1460362705" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.release.1476708600" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release"/>
@@ -155,12 +163,14 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1666734663" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.339808114" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.818739705" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.dialect.std.1817267914" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++11" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.dialect.std.1817267914" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.other.pic.154630577" name="Position Independent Code (-fPIC)" superClass="gnu.cpp.compiler.option.other.pic" value="true" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.include.paths.956244368" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes"/>
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes/exceptions"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.dialect.flags.1543081055" name="Other dialect flags" superClass="gnu.cpp.compiler.option.dialect.flags" value="-std=c++11" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1485447106" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1634144299" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.322722967" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
@@ -168,8 +178,11 @@
 								<option id="gnu.c.compiler.exe.release.option.debugging.level.606940090" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.dialect.std.753483766" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.c99" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.misc.pic.1175393163" name="Position Independent Code (-fPIC)" superClass="gnu.c.compiler.option.misc.pic" value="true" valueType="boolean"/>
-								<option id="gnu.c.compiler.option.include.files.947783139" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" valueType="includeFiles"/>
-								<option id="gnu.c.compiler.option.include.paths.329406831" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath"/>
+								<option id="gnu.c.compiler.option.include.files.947783139" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files"/>
+								<option id="gnu.c.compiler.option.include.paths.329406831" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths"/>
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.696299212" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.161962215" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.release.978407331" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.release"/>
@@ -202,21 +215,6 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="demodulator.cdt.managedbuild.target.gnu.exe.582827748" name="Executable" projectType="cdt.managedbuild.target.gnu.exe"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1823730672;cdt.managedbuild.config.gnu.exe.debug.1823730672.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.338411803;cdt.managedbuild.tool.gnu.cpp.compiler.input.639949404">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1643912293;cdt.managedbuild.config.gnu.exe.release.1643912293.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1434052832;cdt.managedbuild.tool.gnu.cpp.compiler.input.1926693565">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1823730672;cdt.managedbuild.config.gnu.exe.debug.1823730672.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1361537906;cdt.managedbuild.tool.gnu.c.compiler.input.1936266235">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1643912293;cdt.managedbuild.config.gnu.exe.release.1643912293.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.707660865;cdt.managedbuild.tool.gnu.c.compiler.input.1460362705">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release Static">
@@ -230,4 +228,25 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1643912293.1215181989;cdt.managedbuild.config.gnu.exe.release.1643912293.1215181989.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1666734663;cdt.managedbuild.tool.gnu.cpp.compiler.input.1634144299">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1823730672;cdt.managedbuild.config.gnu.exe.debug.1823730672.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.338411803;cdt.managedbuild.tool.gnu.cpp.compiler.input.639949404">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1643912293;cdt.managedbuild.config.gnu.exe.release.1643912293.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1434052832;cdt.managedbuild.tool.gnu.cpp.compiler.input.1926693565">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1823730672;cdt.managedbuild.config.gnu.exe.debug.1823730672.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1361537906;cdt.managedbuild.tool.gnu.c.compiler.input.1936266235">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1643912293.1215181989;cdt.managedbuild.config.gnu.exe.release.1643912293.1215181989.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.322722967;cdt.managedbuild.tool.gnu.c.compiler.input.161962215">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1643912293;cdt.managedbuild.config.gnu.exe.release.1643912293.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.707660865;cdt.managedbuild.tool.gnu.c.compiler.input.1460362705">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 </cproject>

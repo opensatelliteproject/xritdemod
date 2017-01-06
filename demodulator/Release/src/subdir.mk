@@ -5,16 +5,19 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/AirspyDevice.cpp \
+../src/SampleFIFO.cpp \
 ../src/SymbolManager.cpp \
 ../src/demodulator.cpp 
 
 OBJS += \
 ./src/AirspyDevice.o \
+./src/SampleFIFO.o \
 ./src/SymbolManager.o \
 ./src/demodulator.o 
 
 CPP_DEPS += \
 ./src/AirspyDevice.d \
+./src/SampleFIFO.d \
 ./src/SymbolManager.d \
 ./src/demodulator.d 
 

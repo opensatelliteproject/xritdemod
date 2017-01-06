@@ -12,3 +12,4 @@ Release Static/demodulator
 Release Static/**/*.o
 Release Static/**/*.d
 test.bin
+.settings

@@ -98,10 +98,11 @@ void processSamples() {
 		return;
 	}
 
-	// Do unsafe locks and copy queue for the buffer;
-	samplesFifo.unsafe_lockMutex();
 	length = samplesFifo.size() / 2;
 	checkAndResizeBuffers(length);
+
+	// Do unsafe locks and copy queue for the buffer;
+	samplesFifo.unsafe_lockMutex();
 
 	// Convert Interleaved Float IQ to Complex
 	for (int i=0; i<length; i++) {
@@ -109,6 +110,7 @@ void processSamples() {
 		float Q = samplesFifo.unsafe_takeSample();
 		buffer0[i] = std::complex<float>(I, Q);
 	}
+
 	samplesFifo.unsafe_unlockMutex();
 
 	// Decimation / Lowpass
@@ -128,6 +130,13 @@ void processSamples() {
 	int symbols = clockRecovery->Work(buffer0, buffer1, length);
 
 	symbolManager.add(buffer1, symbols);
+}
+
+void symbolLoopFunc() {
+	while (running) {
+		processSamples();
+		usleep(5);	// Let's not waste CPU time
+	}
 }
 
 int main(int argc, char **argv) {
@@ -188,8 +197,9 @@ int main(int argc, char **argv) {
 	airspy.Start();
 	running = true;
 
+	std::thread symbolThread(&symbolLoopFunc);
+
 	while (running) {
-		processSamples();
 		int siq = symbolManager.symbolsInQueue();
 		if (siq > 0) {
 			symbolManager.process();
@@ -199,6 +209,9 @@ int main(int argc, char **argv) {
 
 	std::cout << "Stopping Airspy" << std::endl;
 	airspy.Stop();
+
+	std::cout << "Stopping Symbol Processing Thread" << std::endl;
+	symbolThread.join();
 
 	std::cout << "Closing" << std::endl;
 

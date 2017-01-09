@@ -31,7 +31,7 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1348803267" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.warnings.pedantic.2025753002" name="Pedantic (-pedantic)" superClass="gnu.cpp.compiler.option.warnings.pedantic" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.1368866537" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1368866537" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.639949404" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1361537906" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
@@ -52,7 +52,6 @@
 									<listOptionValue builtIn="false" value="SatHelper"/>
 									<listOptionValue builtIn="false" value="airspy"/>
 									<listOptionValue builtIn="false" value="correct"/>
-									<listOptionValue builtIn="false" value="volk"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1454610869" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -100,7 +99,7 @@
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes"/>
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes/exceptions"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.1801084404" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1801084404" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1926693565" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.707660865" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
@@ -121,7 +120,6 @@
 									<listOptionValue builtIn="false" value="SatHelper"/>
 									<listOptionValue builtIn="false" value="airspy"/>
 									<listOptionValue builtIn="false" value="correct"/>
-									<listOptionValue builtIn="false" value="volk"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1194837544" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
@@ -170,7 +168,7 @@
 									<listOptionValue builtIn="false" value="../../../SatHelper/includes/exceptions"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.dialect.flags.1543081055" name="Other dialect flags" superClass="gnu.cpp.compiler.option.dialect.flags" value="-std=c++11" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.1485447106" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1485447106" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1634144299" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.322722967" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
@@ -191,7 +189,6 @@
 									<listOptionValue builtIn="false" value="SatHelper"/>
 									<listOptionValue builtIn="false" value="airspy"/>
 									<listOptionValue builtIn="false" value="correct"/>
-									<listOptionValue builtIn="false" value="volk"/>
 									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.2075017934" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">

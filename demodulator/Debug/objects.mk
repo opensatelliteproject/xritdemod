@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lSatHelper -lairspy -lcorrect -lvolk -lpthread
+LIBS := -lSatHelper -lairspy -lcorrect -lpthread
 

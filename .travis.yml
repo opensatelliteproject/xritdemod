@@ -14,4 +14,4 @@ env:
   - CTEST_OUTPUT_ON_FAILURE=1 CMAKE_INSTALL_PREFIX=/usr
 
 script:
-  - make libcorrect && sudo make libcorrect-install && make libSatHelper && make libSatHelper install && make && make test
+  - make libcorrect && sudo make libcorrect-install && make libSatHelper && sudo make libSatHelper-install && make && make test

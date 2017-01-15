@@ -67,4 +67,7 @@ libSatHelper-install: FORCE
 	@echo -e '\033[0;32mFinished installing target: $@\033[0m'
 	@echo ' '
 
+test:
+	@echo -e '\033[0;32mNothing to test\033[0m'
+
 FORCE:

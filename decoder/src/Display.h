@@ -9,7 +9,7 @@
 #define DISPLAY_H_
 
 #include <cstdint>
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 
 class Display {
 private:

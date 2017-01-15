@@ -8,7 +8,7 @@
 #include "ChannelWriter.h"
 #include <sstream>
 #include <cstdio>
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 
 ChannelWriter::ChannelWriter(std::string baseFolder) {
     this->baseFolder = baseFolder;

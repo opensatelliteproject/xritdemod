@@ -13,7 +13,7 @@
 #include <queue>
 #include <complex>
 #include <atomic>
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 
 namespace OpenSatelliteProject {
 

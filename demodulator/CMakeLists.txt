@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
-project (xritDecoder)
+project (xritDemodulator)
 enable_language(CXX)
 
 # C++11 Macro
@@ -32,6 +32,7 @@ add_executable (${PROJECT_NAME} ${SOURCES})
 # Links
 target_link_libraries (${PROJECT_NAME} SatHelper)
 target_link_libraries (${PROJECT_NAME} pthread)
+target_link_libraries (${PROJECT_NAME} airspy)
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
@@ -40,5 +41,5 @@ install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 SET(CPACK_GENERATOR "DEB")
 SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Lucas Teske")
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libSatHelper")
-SET(CPACK_DEBIAN_PACKAGE_DESCRIPTION "XRIT Decoder")
+SET(CPACK_DEBIAN_PACKAGE_DESCRIPTION "XRIT Demodulator")
 INCLUDE(CPack)

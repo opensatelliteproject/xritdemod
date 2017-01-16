@@ -10,12 +10,18 @@
 #include <memory.h>
 #include <cstdint>
 #include <SatHelper/sathelper.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include "Display.h"
 #include "ChannelWriter.h"
 #include "ChannelDispatcher.h"
 #include "StatisticsDispatcher.h"
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <Ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#endif
 
 using namespace std;
 

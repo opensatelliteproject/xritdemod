@@ -6,7 +6,7 @@
  */
 
 #include "AirspyDevice.h"
-#include <SatHelperException.h>
+#include <SatHelper/exceptions/SatHelperException.h>
 
 #define AIRSPY_ERROR airspy_error_name((enum airspy_error)result)
 

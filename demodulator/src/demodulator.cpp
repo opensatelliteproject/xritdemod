@@ -12,10 +12,10 @@
 #include <cstdint>
 #include <vector>
 #include <cstring>
+#include <SatHelper/sathelper.h>
 
 #include "AirspyDevice.h"
 #include "SymbolManager.h"
-#include "sathelper.h"
 #include "SampleFIFO.h"
 
 using namespace OpenSatelliteProject;

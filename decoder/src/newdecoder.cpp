@@ -9,7 +9,7 @@
 #include <iostream>
 #include <memory.h>
 #include <cstdint>
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "Display.h"

@@ -12,7 +12,7 @@
 #include <thread>
 #include <queue>
 #include <atomic>
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 #include "ChannelPacket.h"
 #include "Statistics.h"
 

@@ -1,0 +1,17 @@
+dist: trusty
+sudo: required
+language: cpp
+compiler:
+  - gcc
+  - clang
+
+before_install:
+  - sudo add-apt-repository ppa:myriadrf/drivers -y
+  - sudo add-apt-repository ppa:myriadrf/gnuradio -y
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libairspy-dev
+env:
+  - CTEST_OUTPUT_ON_FAILURE=1 CMAKE_INSTALL_PREFIX=/usr
+
+script:
+  - make libcorrect && sudo make libcorrect-install && make libSatHelper && sudo make libSatHelper-install && make && make test

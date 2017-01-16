@@ -6,7 +6,7 @@
  */
 
 #include "Statistics.h"
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 #include <cstring>
 #include <chrono>
 

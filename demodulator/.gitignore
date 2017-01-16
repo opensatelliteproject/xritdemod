@@ -1,15 +1,8 @@
 *.pyc
 channels/
-Debug/*.so
-Debug/**/*.o
-Debug/**/*.d
-Release/*.so
-Release/**/*.o
-Release/**/*.d
-Debug/demodulator
-Release/demodulator
-Release Static/demodulator
-Release Static/**/*.o
-Release Static/**/*.d
+Debug/
+Release/
+Release Static/
+build
 test.bin
 .settings

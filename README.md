@@ -1,3 +1,5 @@
+[![Build Status](https://api.travis-ci.org/opensatelliteproject/xritdemod.svg?branch=master)](https://travis-ci.org/opensatelliteproject/xritdemod) [![GPLv3 License](http://img.shields.io/badge/license-GPLv3-brightgreen.svg)](https://tldrlegal.com/license/gnu-general-public-license-v3-\(gpl-3\))
+
 GOES LRIT Demodulator / Decoder
 =========================================
 

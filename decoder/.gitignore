@@ -1,12 +1,7 @@
 channels/
-Debug/*.so
-Debug/**/*.o
-Debug/**/*.d
-Release/*.so
-Release/**/*.o
-Release/**/*.d
-Debug/decoder
-Release/decoder
-Release Static/decoder
-Release Static/**/*.o
-Release Static/**/*.d
+Debug/
+Release/
+Release Static/
+build
+libsathelper
+libcorrect

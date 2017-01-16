@@ -8,7 +8,7 @@
 #ifndef STATISTICSDISPATCHER_H_
 #define STATISTICSDISPATCHER_H_
 
-#include <sathelper.h>
+#include <SatHelper/sathelper.h>
 #include "Statistics.h"
 #include <thread>
 #include <mutex>

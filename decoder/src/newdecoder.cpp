@@ -40,6 +40,7 @@ using namespace std;
 #define LASTFRAMEDATABITS 64
 #define LASTFRAMEDATA (LASTFRAMEDATABITS / 8)
 #define TIMEOUT 2
+#define FLYWHEELRECHECK 4
 
 const uint64_t UW0 = 0xfca2b63db00d9794;
 const uint64_t UW2 = 0x035d49c24ff2686b;
@@ -72,6 +73,8 @@ int main(int argc, char **argv) {
     bool dump = false;
     Statistics statistics;
     bool isCorrupted = false;
+    bool lastFrameOK = false;
+    int flywheelCount = 0;
 
     SatHelper::Correlator correlator;
     SatHelper::PacketFixer packetFixer;
@@ -140,13 +143,29 @@ int main(int argc, char **argv) {
             uint32_t chunkSize = CODEDFRAMESIZE;
             try {
                 checkTime = SatHelper::Tools::getTimestamp();
-                while (client.AvailableData() < CODEDFRAMESIZE) {
-                    if (SatHelper::Tools::getTimestamp() - checkTime > TIMEOUT) {
-                        throw SatHelper::ClientDisconnectedException();
+                client.WaitForData(CODEDFRAMESIZE, TIMEOUT);
+                client.Receive((char *) codedData, chunkSize);
+
+                if (flywheelCount == FLYWHEELRECHECK) {
+                    lastFrameOK = false;
+                    flywheelCount = 0;
+                }
+
+                // This reduces CPU Usage from 70% to 50% on my laptop
+                if (!lastFrameOK) {
+                    correlator.correlate(codedData, chunkSize);
+                } else {
+                    // If we got a good lock before, let's just check if the sync is in correct pos.
+                    correlator.correlate(codedData, chunkSize / 16);
+                    if (correlator.getHighestCorrelationPosition() != 0) {
+                        // Oh no, that means something happened :/
+                        std::cerr << "Something happened. Pos: " << correlator.getHighestCorrelationPosition() << std::endl;
+                        correlator.correlate(codedData, chunkSize);
+                        lastFrameOK = false;
+                        flywheelCount = 0;
                     }
                 }
-                client.Receive((char *) codedData, chunkSize);
-                correlator.correlate(codedData, chunkSize);
+                flywheelCount++;
 
                 uint32_t word = correlator.getCorrelationWordNumber();
                 uint32_t pos = correlator.getHighestCorrelationPosition();
@@ -227,12 +246,14 @@ int main(int argc, char **argv) {
                     channelWriter.dumpCorruptedPacketStatistics(viterbi.GetBER(), corr, derrors);
 #endif
                     isCorrupted = true;
+                    lastFrameOK = false;
                 } else {
                     averageRSCorrections += derrors[0] != -1 ? derrors[0] : 0;
                     averageRSCorrections += derrors[1] != -1 ? derrors[1] : 0;
                     averageRSCorrections += derrors[2] != -1 ? derrors[2] : 0;
                     averageRSCorrections += derrors[3] != -1 ? derrors[3] : 0;
                     isCorrupted = false;
+                    lastFrameOK = true;
                 }
 
                 // Packet Header Filtering

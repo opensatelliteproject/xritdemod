@@ -47,7 +47,7 @@ void Display::show() {
     int runningTime = SatHelper::Tools::getTimestamp() - startTime;
     screenManager.GotoXY(0, 0);
     std::cout << "┌─────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-    std::cout << "|                    LRIT DECODER - Open Satellite Project                    |" << std::endl;
+    std::cout << "|                    xRIT DECODER - Open Satellite Project                    |" << std::endl;
     std::cout << "|─────────────────────────────────────────────────────────────────────────────|" << std::endl;
     std::cout << "|         Current Frame Data           |               Statistics             |" << std::endl;
     std::cout << "|──────────────────────────────────────|──────────────────────────────────────|" << std::endl;

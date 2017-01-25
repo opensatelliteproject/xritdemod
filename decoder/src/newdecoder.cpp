@@ -28,6 +28,7 @@ using namespace std;
 //#define DUMP_CORRUPTED_PACKETS
 #define USE_LAST_FRAME_DATA
 //#define DEBUG_MODE
+#define HRIT
 
 #define FRAMESIZE 1024
 #define FRAMEBITS (FRAMESIZE * 8)
@@ -42,8 +43,13 @@ using namespace std;
 #define TIMEOUT 2
 #define FLYWHEELRECHECK 4
 
+#ifdef HRIT
+const uint64_t UW0 = 0xfc4ef4fd0cc2df89;
+const uint64_t UW2 = 0x25010b02f33d2076;
+#else
 const uint64_t UW0 = 0xfca2b63db00d9794;
 const uint64_t UW2 = 0x035d49c24ff2686b;
+#endif
 
 int main(int argc, char **argv) {
 #ifdef USE_LAST_FRAME_DATA
@@ -193,8 +199,12 @@ int main(int argc, char **argv) {
                     client.Receive((char *) (codedData + CODEDFRAMESIZE - pos), chunkSize);
                 }
 
+#ifndef HRIT
                 // Fix Phase Shift
+                // HRIT uses differential encoding (NRZ-M) so it doesn't need phase correction
                 packetFixer.fixPacket(codedData, CODEDFRAMESIZE, phaseShift, false);
+#endif
+
 #ifdef USE_LAST_FRAME_DATA
                 // Shift data and add previous values.
                 memcpy(viterbiData, lastFrameEnd, LASTFRAMEDATABITS);
@@ -205,8 +215,14 @@ int main(int argc, char **argv) {
                 //
 #ifdef USE_LAST_FRAME_DATA
                 viterbi.decode(viterbiData, decodedData);
+#   ifdef HRIT
+                SatHelper::DifferentialEncoding::nrzmDecode(decodedData, FRAMESIZE + LASTFRAMEDATA);
+#   endif
 #else
                 viterbi.decode(codedData, decodedData);
+#   ifdef HRIT
+                SatHelper::DifferentialEncoding::nrzmDecode(decodedData, FRAMESIZE);
+#   endif
 #endif
                 float signalErrors = viterbi.GetPercentBER();
                 signalErrors = 100 - (signalErrors * 10);
@@ -231,6 +247,7 @@ int main(int argc, char **argv) {
 
                 // Reed Solomon Error Correction
                 int32_t derrors[4] = { 0, 0, 0, 0 };
+
                 for (int i = 0; i < RSBLOCKS; i++) {
                     reedSolomon.deinterleave(decodedData, rsWorkBuffer, i, RSBLOCKS);
                     derrors[i] = reedSolomon.decode_ccsds(rsWorkBuffer);

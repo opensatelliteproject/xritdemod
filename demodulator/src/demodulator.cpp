@@ -21,10 +21,21 @@
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
 
+#define USE_HRIT
+
+// HRIT Options
+#ifdef USE_HRIT
+#	define CENTER_FREQUENCY 1694100000
+#	define SYMBOL_RATE 927000
+#	define BASE_DECIMATION 1
+#else
 // LRIT Options
-#define CENTER_FREQUENCY 1691000000
+#	define CENTER_FREQUENCY 1691000000
+#	define SYMBOL_RATE 293883
+// Use 2 for 2.5Msps on Airspy R2 and 3.0Msps on Airspy Mini
+#	define BASE_DECIMATION 2
+#endif
 #define LOOP_ORDER 2
-#define SYMBOL_RATE 293883
 #define RRC_ALPHA 0.5
 #define RRC_TAPS 63
 #define PLL_ALPHA 0.025
@@ -41,8 +52,6 @@ using namespace SatHelper;
 // 256 * 1024 samples is about 1Mb of ram.
 #define FIFO_SIZE (256 * 1024)
 
-// Use 2 for 2.5Msps on Airspy R2 and 3.0Msps on Airspy Mini
-#define BASE_DECIMATION 2
 
 AGC *agc;
 CostasLoop *costasLoop;

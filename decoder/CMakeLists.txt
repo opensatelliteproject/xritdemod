@@ -23,6 +23,8 @@ set(VERSION_INFO_MAINT_VERSION 0git)
 # Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+set(CMAKE_EXE_LINKER_FLAGS "-static")
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # Source Code
 file(GLOB SOURCES src/*.cpp)
@@ -32,6 +34,11 @@ add_executable (${PROJECT_NAME} ${SOURCES})
 # Links
 target_link_libraries (${PROJECT_NAME} SatHelper)
 target_link_libraries (${PROJECT_NAME} pthread)
+target_link_libraries (${PROJECT_NAME} correct)
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static")
+endif()
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

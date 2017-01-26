@@ -16,20 +16,28 @@ namespace SatHelper {
 
 class SampleFIFO {
 private:
-	std::queue<float> samples;
+	float *baseBuffer;
+	int curSample;
+
 	std::mutex fifoMutex;
 	unsigned int maxLength;
 	std::atomic_bool overflow;
+	unsigned int numItems;
 
+	inline float *getPositionPointer(int pos) {
+		return &baseBuffer[pos % maxLength];
+	}
 public:
-	SampleFIFO(unsigned int maxLength) :
-			maxLength(maxLength), overflow(false) {
+	SampleFIFO(const unsigned int maxLength) :
+		 curSample(0), maxLength(maxLength), overflow(false), numItems(0) {
+		baseBuffer = new float[maxLength];
 	}
 
 	virtual ~SampleFIFO();
 
 	// Safe operations
-	void addSamples(float *data, int length);
+	void addSamples(const float *data, unsigned int length);
+	void addSamples(const int16_t *data, unsigned int length);
 	void addSample(float data);
 	float takeSample();
 	unsigned int size();
@@ -47,8 +55,10 @@ public:
 	}
 
 	inline float unsafe_takeSample() {
-		float v = samples.front();
-		samples.pop();
+		float v = *getPositionPointer(curSample);
+		curSample++;
+		curSample %= maxLength;
+		numItems-=1;
 		overflow = false;
 		return v;
 	}

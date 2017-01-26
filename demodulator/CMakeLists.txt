@@ -23,8 +23,6 @@ set(VERSION_INFO_MAINT_VERSION 0git)
 # Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-set(CMAKE_EXE_LINKER_FLAGS "-static")
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # Source Code
 file(GLOB SOURCES src/*.cpp)
@@ -32,7 +30,7 @@ file(GLOB SOURCES src/*.cpp)
 add_executable (${PROJECT_NAME} ${SOURCES})
 
 # Links
-target_link_libraries (${PROJECT_NAME} SatHelper)
+target_link_libraries (${PROJECT_NAME} SatHelper.a)
 target_link_libraries (${PROJECT_NAME} pthread)
 target_link_libraries (${PROJECT_NAME} airspy)
 target_link_libraries (${PROJECT_NAME} usb-1.0)

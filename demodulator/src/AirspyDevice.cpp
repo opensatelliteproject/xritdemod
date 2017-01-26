@@ -147,7 +147,7 @@ void AirspyDevice::SetMixerGain(uint8_t value) {
 	airspy_set_mixer_gain(device, value);
 }
 
-const std::vector<uint64_t>& AirspyDevice::GetAvailableSampleRates() {
+const std::vector<uint32_t>& AirspyDevice::GetAvailableSampleRates() {
 	return availableSampleRates;
 }
 
@@ -173,11 +173,11 @@ void AirspyDevice::Stop() {
 	}
 }
 
-uint64_t AirspyDevice::SetSampleRate(uint64_t sampleRate) {
+uint32_t AirspyDevice::SetSampleRate(uint32_t sampleRate) {
 	if (this->sampleRate != sampleRate) {
 		if (airspy_is_streaming(device) == AIRSPY_TRUE) {
 			Stop();
-			int result = airspy_set_samplerate(device, (uint32_t) sampleRate);
+			int result = airspy_set_samplerate(device, sampleRate);
 			if (result != AIRSPY_SUCCESS) {
 				std::cerr << "Cannot change device sample rate: "
 						<< AIRSPY_ERROR << std::endl;
@@ -186,7 +186,7 @@ uint64_t AirspyDevice::SetSampleRate(uint64_t sampleRate) {
 			}
 			Start();
 		} else {
-			int result = airspy_set_samplerate(device, (uint32_t) sampleRate);
+			int result = airspy_set_samplerate(device, sampleRate);
 			if (result != AIRSPY_SUCCESS) {
 				std::cerr << "Cannot change device sample rate: "
 						<< AIRSPY_ERROR << std::endl;
@@ -198,10 +198,10 @@ uint64_t AirspyDevice::SetSampleRate(uint64_t sampleRate) {
 	return this->sampleRate;
 }
 
-uint64_t AirspyDevice::SetCenterFrequency(uint64_t centerFrequency) {
+uint32_t AirspyDevice::SetCenterFrequency(uint32_t centerFrequency) {
 	centerFrequency = centerFrequency < 24000000 ? 24000000 : centerFrequency;
 	centerFrequency = centerFrequency > 1750000000 ? 1750000000 : centerFrequency;
-	int result = airspy_set_freq(device, (uint32_t) centerFrequency);
+	int result = airspy_set_freq(device, centerFrequency);
 	if (result != AIRSPY_SUCCESS) {
 		std::cerr << "Cannot change device center frequency: " << AIRSPY_ERROR << std::endl;
 	} else {

@@ -1,7 +1,7 @@
-GOES LRIT Decoder
+GOES xRIT Decoder
 =================
 
-This is the GOES LRIT Decoder. This works together with the demodulator by receiving a TCP Stream of the BPSK Symbols.
+This is the GOES xRIT Decoder. This works together with the demodulator by receiving a TCP Stream of the BPSK Symbols.
 The output is a demuxed channel data at `channels/channel_{ID}.bin`.
 
 It depends on **SatHelper** library either by a static link or shared link (see SatHelper folder for more info)

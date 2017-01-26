@@ -1,9 +1,9 @@
 //============================================================================
-// Name        : GOES LRIT Demodulator
+// Name        : GOES xRIT Demodulator
 // Author      : Lucas Teske
 // Version     : 1.0
 // Copyright   : Copyright 2016
-// Description : GOES LRIT Demodulator - Open Satellite Project
+// Description : GOES xRIT Demodulator - Open Satellite Project
 //============================================================================
 
 #include <cstdio>
@@ -21,11 +21,23 @@
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
 
+#define USE_HRIT
+
+// HRIT Options
+#ifdef USE_HRIT
+#	define CENTER_FREQUENCY 1694100000
+#	define SYMBOL_RATE 927000
+#	define BASE_DECIMATION 1
+#	define RRC_ALPHA 0.3
+#else
 // LRIT Options
-#define CENTER_FREQUENCY 1691000000
+#	define CENTER_FREQUENCY 1691000000
+#	define SYMBOL_RATE 293883
+// Use 2 for 2.5Msps on Airspy R2 and 3.0Msps on Airspy Mini
+#	define BASE_DECIMATION 2
+#	define RRC_ALPHA 0.5
+#endif
 #define LOOP_ORDER 2
-#define SYMBOL_RATE 293883
-#define RRC_ALPHA 0.5
 #define RRC_TAPS 63
 #define PLL_ALPHA 0.025
 #define CLOCK_ALPHA 0.0037
@@ -38,11 +50,9 @@ using namespace SatHelper;
 #define AGC_MAX_GAIN 4000
 
 // FIFO Size in Samples
-// 256 * 1024 samples is about 1Mb of ram.
-#define FIFO_SIZE (256 * 1024)
+// 1024 * 1024 samples is about 4Mb of ram.
+#define FIFO_SIZE (1024 * 1024)
 
-// Use 2 for 2.5Msps on Airspy R2 and 3.0Msps on Airspy Mini
-#define BASE_DECIMATION 2
 
 AGC *agc;
 CostasLoop *costasLoop;
@@ -64,8 +74,7 @@ std::complex<float> *buffer1 = NULL;
 uint32_t startTime = 0;
 
 void onSamplesAvailable(void *fdata, int length) {
-	float *data = (float *) fdata;
-	samplesFifo.addSamples(data, length * 2);
+	samplesFifo.addSamples((float *) fdata, length * 2);
 }
 
 void checkAndResizeBuffers(int length) {
@@ -100,7 +109,6 @@ void processSamples() {
 
 	length = samplesFifo.size() / 2;
 	checkAndResizeBuffers(length);
-
 	// Do unsafe locks and copy queue for the buffer;
 	samplesFifo.unsafe_lockMutex();
 
@@ -120,6 +128,7 @@ void processSamples() {
 	// Automatic Gain Control
 	agc->Work(buffer1, buffer0, length);
 
+
 	// Filter
 	rrcFilter->Work(buffer0, buffer1, length);
 
@@ -135,7 +144,7 @@ void processSamples() {
 void symbolLoopFunc() {
 	while (running) {
 		processSamples();
-		usleep(5);	// Let's not waste CPU time
+		usleep(1);	// Let's not waste CPU time
 	}
 }
 
@@ -146,8 +155,8 @@ int main(int argc, char **argv) {
 
 	bool isMini = false;
 
-	std::vector<uint64_t> sampleRates = airspy.GetAvailableSampleRates();
-	for (uint64_t sampleRate : sampleRates) {
+	std::vector<uint32_t> sampleRates = airspy.GetAvailableSampleRates();
+	for (uint32_t sampleRate : sampleRates) {
 		if (sampleRate == 3000000) {
 			isMini = true;
 			airspy.SetSampleRate(sampleRate);
@@ -165,35 +174,30 @@ int main(int argc, char **argv) {
 
 	airspy.SetSamplesAvailableCallback(onSamplesAvailable);
 
-	float circuitSampleRate = airspy.GetSampleRate()
-			/ ((float) BASE_DECIMATION);
+	float circuitSampleRate = airspy.GetSampleRate() / ((float) BASE_DECIMATION);
 	float sps = circuitSampleRate / ((float) SYMBOL_RATE);
 
 	std::cout << "Samples per Symbol: " << sps << std::endl;
 	std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
-	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate
-			<< std::endl;
+	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate / 2 << std::endl;
 
-	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE,
-			RRC_ALPHA, RRC_TAPS);
-	std::vector<float> decimatorTaps = Filters::lowPass(1,
-			airspy.GetSampleRate(), circuitSampleRate, 100e3,
-			FFTWindows::WindowType::HAMMING, 6.76);
+	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, SYMBOL_RATE, RRC_ALPHA, RRC_TAPS);
+	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
 
 	decimator = new FirFilter(BASE_DECIMATION, decimatorTaps);
 	agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
 	costasLoop = new CostasLoop(PLL_ALPHA, LOOP_ORDER);
-	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU,
-			CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
+	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU, CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
 	rrcFilter = new FirFilter(1, rrcTaps);
 
 	airspy.SetCenterFrequency(CENTER_FREQUENCY);
-	airspy.SetAGC(false);
+	airspy.SetAGC(true);
 	airspy.SetMixerGain(15);
 	airspy.SetLNAGain(15);
 	airspy.SetVGAGain(15);
 
 	std::cout << "Starting Airspy" << std::endl;
+	std::cout << "Center Frequency: " << airspy.GetCenterFrequency() << std::endl;
 	airspy.Start();
 	running = true;
 
@@ -204,7 +208,7 @@ int main(int argc, char **argv) {
 		if (siq > 0) {
 			symbolManager.process();
 		}
-		usleep(10);	// Let's not waste CPU time
+		usleep(1);	// Let's not waste CPU time
 	}
 
 	std::cout << "Stopping Airspy" << std::endl;

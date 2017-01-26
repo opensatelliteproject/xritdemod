@@ -10,18 +10,55 @@
 namespace SatHelper {
 
 SampleFIFO::~SampleFIFO() {
+	delete[] baseBuffer;
 }
 
-void SampleFIFO::addSamples(float *data, int length) {
+void SampleFIFO::addSamples(const float *data, unsigned int length) {
 	fifoMutex.lock();
-	for (int i = 0; i < length; i++) {
-		if (samples.size() + 1 > maxLength) {
-			overflow = true;
-			samples.pop();
-		} else {
-			overflow = false;
-		}
-		samples.push(data[i]);
+	bool trimmed = false;
+	if (length >= maxLength) {
+		overflow = true;
+		length = maxLength;
+		trimmed = true;
+	}
+
+	if (numItems + length == maxLength) {
+		curSample += length;
+		curSample %= maxLength;
+		numItems -= length;
+		overflow = true;
+	} else if (!trimmed) {
+		overflow = false;
+	}
+
+	for (unsigned int i = 0; i < length; i++) {
+		*getPositionPointer(curSample + numItems) = data[i];
+		numItems++;
+	}
+	fifoMutex.unlock();
+}
+
+void SampleFIFO::addSamples(const int16_t *data, unsigned int length) {
+	fifoMutex.lock();
+
+	bool trimmed = false;
+	if (length >= maxLength) {
+		overflow = true;
+		length = maxLength;
+		trimmed = true;
+	}
+
+	if (numItems + length >= maxLength) {
+		curSample += length;
+		numItems -= length;
+		overflow = true;
+	} else if (!trimmed) {
+		overflow = false;
+	}
+
+	for (unsigned int i = 0; i < length; i++) {
+		*getPositionPointer(curSample + numItems) = ((float)data[i]) / 32768.0f;
+		numItems++;
 	}
 	fifoMutex.unlock();
 }
@@ -29,14 +66,18 @@ void SampleFIFO::addSamples(float *data, int length) {
 void SampleFIFO::addSample(float data) {
 	fifoMutex.lock();
 
-	if (samples.size() + 1 > maxLength) {
+	if (numItems + 1 == maxLength) {
+		curSample++;
+		curSample %= maxLength;
+		numItems--;
 		overflow = true;
-		samples.pop();
 	} else {
 		overflow = false;
 	}
 
-	samples.push(data);
+	*getPositionPointer(curSample + numItems) = data;
+	numItems++;
+
 	fifoMutex.unlock();
 }
 
@@ -44,10 +85,8 @@ float SampleFIFO::takeSample() {
 	float v = 0.0f;
 
 	fifoMutex.lock();
-	if (samples.size() > 0) {
-		v = samples.front();
-		samples.pop();
-		overflow = false;
+	if (numItems > 0) {
+		v = unsafe_takeSample();
 	}
 	fifoMutex.unlock();
 
@@ -58,7 +97,7 @@ unsigned int SampleFIFO::size() {
 	unsigned int size;
 
 	fifoMutex.lock();
-	size = samples.size();
+	size = numItems;
 	fifoMutex.unlock();
 
 	return size;
@@ -68,7 +107,7 @@ bool SampleFIFO::containsSamples() {
 	bool ret;
 
 	fifoMutex.lock();
-	ret = samples.size() > 0;
+	ret = numItems > 0;
 	fifoMutex.unlock();
 
 	return ret;

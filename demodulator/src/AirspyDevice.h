@@ -30,12 +30,12 @@ private:
 	std::string firmwareVersion;
 	std::string partNumber;
 	std::string serialNumber;
-	std::vector<uint64_t> availableSampleRates;
+	std::vector<uint32_t> availableSampleRates;
 	std::string name;
 	airspy_device* device;
 
-	uint64_t sampleRate;
-	uint64_t centerFrequency;
+	uint32_t sampleRate;
+	uint32_t centerFrequency;
 
 	int SamplesAvailableCallback(airspy_transfer *transfer);
 public:
@@ -45,9 +45,9 @@ public:
 	static void Initialize();
 	static void DeInitialize();
 
-	uint64_t SetSampleRate(uint64_t sampleRate);
-	uint64_t SetCenterFrequency(uint64_t centerFrequency);
-	const std::vector<uint64_t>& GetAvailableSampleRates();
+	uint32_t SetSampleRate(uint32_t sampleRate);
+	uint32_t SetCenterFrequency(uint32_t centerFrequency);
+	const std::vector<uint32_t>& GetAvailableSampleRates();
 	void Start();
 	void Stop();
 	void SetAGC(bool agc);
@@ -56,7 +56,7 @@ public:
 	void SetVGAGain(uint8_t value);
 	void SetMixerGain(uint8_t value);
 
-	inline uint64_t GetCenterFrequency() {
+	inline uint32_t GetCenterFrequency() {
 		return centerFrequency;
 	}
 
@@ -64,7 +64,7 @@ public:
 		return name;
 	}
 
-	inline uint64_t GetSampleRate() {
+	inline uint32_t GetSampleRate() {
 		return sampleRate;
 	}
 

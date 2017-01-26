@@ -30,9 +30,14 @@ file(GLOB SOURCES src/*.cpp)
 add_executable (${PROJECT_NAME} ${SOURCES})
 
 # Links
-target_link_libraries (${PROJECT_NAME} SatHelper)
+target_link_libraries (${PROJECT_NAME} SatHelper.a)
 target_link_libraries (${PROJECT_NAME} pthread)
 target_link_libraries (${PROJECT_NAME} airspy)
+target_link_libraries (${PROJECT_NAME} usb-1.0)
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static")
+endif()
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

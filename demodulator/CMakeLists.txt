@@ -21,8 +21,8 @@ set(VERSION_INFO_MINOR_VERSION 0)
 set(VERSION_INFO_MAINT_VERSION 0git)
 
 # Flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3")
 
 # Source Code
 file(GLOB SOURCES src/*.cpp)

@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include "FrontendDevice.h"
 
 extern "C" {
 #include <libairspy/airspy.h>
@@ -21,11 +22,11 @@ extern "C" {
 
 namespace OpenSatelliteProject {
 
-class AirspyDevice {
+class AirspyDevice: public FrontendDevice {
 private:
 	static std::string libraryVersion;
 
-	std::function<void(void *data, int length)> cb;
+	std::function<void(void *data, int length, int type)> cb;
 	uint8_t boardId;
 	std::string firmwareVersion;
 	std::string partNumber;
@@ -45,32 +46,24 @@ public:
 	static void Initialize();
 	static void DeInitialize();
 
-	uint32_t SetSampleRate(uint32_t sampleRate);
-	uint32_t SetCenterFrequency(uint32_t centerFrequency);
-	const std::vector<uint32_t>& GetAvailableSampleRates();
-	void Start();
-	void Stop();
-	void SetAGC(bool agc);
+	uint32_t SetSampleRate(uint32_t sampleRate) override;
+	uint32_t SetCenterFrequency(uint32_t centerFrequency) override;
+	const std::vector<uint32_t>& GetAvailableSampleRates() override;
+	void Start() override;
+	void Stop() override;
+	void SetAGC(bool agc) override;
 
-	void SetLNAGain(uint8_t value);
-	void SetVGAGain(uint8_t value);
-	void SetMixerGain(uint8_t value);
+	void SetLNAGain(uint8_t value) override;
+	void SetVGAGain(uint8_t value) override;
+	void SetMixerGain(uint8_t value) override;
 
-	inline uint32_t GetCenterFrequency() {
-		return centerFrequency;
-	}
+	uint32_t GetCenterFrequency() override;
 
-	inline const std::string &GetName() {
-		return name;
-	}
+	const std::string &GetName() override;
 
-	inline uint32_t GetSampleRate() {
-		return sampleRate;
-	}
+	uint32_t GetSampleRate() override;
 
-	inline void SetSamplesAvailableCallback(std::function<void(void*data, int length)> cb) {
-		this->cb = cb;
-	}
+	void SetSamplesAvailableCallback(std::function<void(void*data, int length, int type)> cb) override;
 
 };
 

@@ -61,5 +61,7 @@
 #define CFG_MIXER_GAIN "mixerGain"
 #define CFG_LNA_GAIN "lnaGain"
 #define CFG_VGA_GAIN "vgaGain"
+#define CFG_DEVICE_TYPE "deviceType"
+#define CFG_FILENAME "filename"
 
 #endif /* SRC_PARAMETERS_H_ */

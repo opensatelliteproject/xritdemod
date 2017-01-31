@@ -15,6 +15,22 @@ namespace OpenSatelliteProject {
 
 std::string AirspyDevice::libraryVersion;
 
+uint32_t AirspyDevice::GetCenterFrequency() {
+	return centerFrequency;
+}
+
+const std::string &AirspyDevice::GetName() {
+	return name;
+}
+
+uint32_t AirspyDevice::GetSampleRate() {
+	return sampleRate;
+}
+
+void AirspyDevice::SetSamplesAvailableCallback(std::function<void(void*data, int length, int type)> cb) {
+	this->cb = cb;
+}
+
 AirspyDevice::AirspyDevice() {
 	int result = airspy_open(&device);
 	if (result != AIRSPY_SUCCESS) {
@@ -215,7 +231,7 @@ int AirspyDevice::SamplesAvailableCallback(airspy_transfer * transfer) {
 		std::cerr << "Warning! " << transfer->dropped_samples << " samples has been dropped!" << std::endl;
 	}
 	if (cb != NULL) {
-		cb(transfer->samples, transfer->sample_count);
+		cb(transfer->samples, transfer->sample_count, FRONTEND_SAMPLETYPE_FLOATIQ);
 	}
 	return 0;
 }

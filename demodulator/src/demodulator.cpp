@@ -13,8 +13,9 @@
 #include <vector>
 #include <cstring>
 #include <SatHelper/sathelper.h>
-
+#include "FrontendDevice.h"
 #include "AirspyDevice.h"
+#include "CFileFrontend.h"
 #include "SymbolManager.h"
 #include "SampleFIFO.h"
 
@@ -24,6 +25,7 @@ using namespace SatHelper;
 #include "Parameters.h"
 
 
+FrontendDevice *device;
 AGC *agc;
 CostasLoop *costasLoop;
 ClockRecovery *clockRecovery;
@@ -45,8 +47,12 @@ std::complex<float> *buffer1 = NULL;
 
 uint32_t startTime = 0;
 
-void onSamplesAvailable(void *fdata, int length) {
-	samplesFifo.addSamples((float *) fdata, length * 2);
+void onSamplesAvailable(void *fdata, int length, int type) {
+	if (type == FRONTEND_SAMPLETYPE_FLOATIQ) {
+		samplesFifo.addSamples((float *) fdata, length * 2);
+	} else {
+		std::cerr << "Unknown sample type: " << type << std::endl;
+	}
 }
 
 void checkAndResizeBuffers(int length) {
@@ -67,8 +73,15 @@ void checkAndResizeBuffers(int length) {
 	}
 }
 
+inline void swapBuffers(std::complex<float> **a, std::complex<float> **b) {
+	std::complex<float> *c = *b;
+	*b = *a;
+	*a = c;
+}
+
 void processSamples() {
 	int length;
+	std::complex<float> *ba, *bb;
 
 	if (samplesFifo.isOverflow()) {
 		std::cerr << "Input Samples Fifo is overflowing!" << std::endl;
@@ -93,24 +106,33 @@ void processSamples() {
 
 	samplesFifo.unsafe_unlockMutex();
 
+	ba = buffer0;
+	bb = buffer1;
+
 	// Decimation / Lowpass
-	length /= baseDecimation;
-	decimator->Work(buffer0, buffer1, length);
+	if (baseDecimation > 1) {
+		length /= baseDecimation;
+		decimator->Work(ba, bb, length);
+		swapBuffers(&ba, &bb);
+	}
 
 	// Automatic Gain Control
-	agc->Work(buffer1, buffer0, length);
-
+	agc->Work(ba, bb, length);
+	swapBuffers(&ba, &bb);
 
 	// Filter
-	rrcFilter->Work(buffer0, buffer1, length);
+	rrcFilter->Work(ba, bb, length);
+	swapBuffers(&ba, &bb);
 
 	// Costas Loop
-	costasLoop->Work(buffer1, buffer0, length);
+	costasLoop->Work(ba, bb, length);
+	swapBuffers(&ba, &bb);
 
 	// Clock Recovery
-	int symbols = clockRecovery->Work(buffer0, buffer1, length);
+	int symbols = clockRecovery->Work(ba, bb, length);
+	swapBuffers(&ba, &bb);
 
-	symbolManager.add(buffer1, symbols);
+	symbolManager.add(ba, symbols);
 }
 
 void symbolLoopFunc() {
@@ -120,30 +142,35 @@ void symbolLoopFunc() {
 	}
 }
 
-void setLRITMode(ConfigParser &parser) {
+void setLRITMode(ConfigParser &parser, bool normal) {
 	parser[CFG_SYMBOL_RATE] = std::string(QUOTE(LRIT_SYMBOL_RATE));
 	parser[CFG_MODE] = std::string("lrit");
 	parser[CFG_RRC_ALPHA] = std::string(QUOTE(LRIT_RRC_ALPHA));
-	parser[CFG_FREQUENCY] = std::string(QUOTE(LRIT_CENTER_FREQUENCY));
-	parser[CFG_SAMPLE_RATE] = std::string(QUOTE(DEFAULT_SAMPLE_RATE));
-	parser[CFG_DECIMATION] = std::string(QUOTE(DEFAULT_DECIMATION));
+	if (normal) {
+		parser[CFG_FREQUENCY] = std::string(QUOTE(LRIT_CENTER_FREQUENCY));
+		parser[CFG_SAMPLE_RATE] = std::string(QUOTE(DEFAULT_SAMPLE_RATE));
+		parser[CFG_DECIMATION] = std::string(QUOTE(DEFAULT_DECIMATION));
+	}
 }
 
-void setHRITMode(ConfigParser &parser) {
+void setHRITMode(ConfigParser &parser, bool normal) {
 	parser[CFG_SYMBOL_RATE] = std::string(QUOTE(HRIT_SYMBOL_RATE));
 	parser[CFG_MODE] = std::string("hrit");
 	parser[CFG_RRC_ALPHA] = std::string(QUOTE(HRIT_RRC_ALPHA));
-	parser[CFG_FREQUENCY] = std::string(QUOTE(HRIT_CENTER_FREQUENCY));
-	parser[CFG_SAMPLE_RATE] = std::string(QUOTE(DEFAULT_SAMPLE_RATE));
-	parser[CFG_DECIMATION] = std::string(QUOTE(DEFAULT_DECIMATION));
+	if (normal) {
+		parser[CFG_FREQUENCY] = std::string(QUOTE(HRIT_CENTER_FREQUENCY));
+		parser[CFG_SAMPLE_RATE] = std::string(QUOTE(DEFAULT_SAMPLE_RATE));
+		parser[CFG_DECIMATION] = std::string(QUOTE(DEFAULT_DECIMATION));
+	}
 }
 
 void setDefaults(ConfigParser &parser) {
-	setLRITMode(parser);
+	setLRITMode(parser, true);
 	parser[CFG_AGC] = "true";
 	parser[CFG_LNA_GAIN] = std::string(QUOTE(DEFAULT_LNA_GAIN));
 	parser[CFG_MIXER_GAIN] = std::string(QUOTE(DEFAULT_MIX_GAIN));
 	parser[CFG_VGA_GAIN] = std::string(QUOTE(DEFAULT_VGA_GAIN));
+	parser[CFG_DEVICE_TYPE] = std::string("airspy");
 	parser.SaveFile();
 }
 
@@ -165,10 +192,10 @@ int main(int argc, char **argv) {
 	if (parser.hasKey(CFG_MODE)) {
 		if (parser[CFG_MODE] == "lrit") {
 			std::cout << "Selected LRIT mode. Ignoring parameters from config file." << std::endl;
-			setLRITMode(parser);
+			setLRITMode(parser, false);
 		} else if (parser[CFG_MODE] == "hrit") {
 			std::cout << "Selected HRIT mode. Ignoring parameters from config file." << std::endl;
-			setHRITMode(parser);
+			setHRITMode(parser, false);
 		} else {
 			std::cerr << "Invalid mode specified: " << parser[CFG_MODE] << std::endl;
 			return 1;
@@ -198,6 +225,7 @@ int main(int argc, char **argv) {
 
 	if (parser.hasKey(CFG_SAMPLE_RATE)) {
 		sampleRate = parser.getUInt(CFG_SAMPLE_RATE);
+		std::cout << "Sample Rate: " << sampleRate << std::endl;
 	} else {
 		std::cerr << "Field \"sampleRate\" is missing on config file." << std::endl;
 		return 1;
@@ -231,34 +259,54 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	AirspyDevice::Initialize();
-	AirspyDevice airspy;
+	if (parser.hasKey(CFG_DEVICE_TYPE)) {
+		if (parser[CFG_DEVICE_TYPE] == "airspy") {
+			AirspyDevice::Initialize();
+			device = new AirspyDevice();
 
-	bool isMini = false;
-	bool sampleRateSet = false;
+			bool isMini = false;
+			bool sampleRateSet = false;
 
-	std::vector<uint32_t> sampleRates = airspy.GetAvailableSampleRates();
-	for (uint32_t asSR : sampleRates) {
-		if (asSR == sampleRate) {
-			isMini = true;
-			airspy.SetSampleRate(sampleRate);
-			sampleRateSet = true;
-			break;
+			std::vector<uint32_t> sampleRates = device->GetAvailableSampleRates();
+			for (uint32_t asSR : sampleRates) {
+				if (asSR == sampleRate) {
+					isMini = true;
+					device->SetSampleRate(sampleRate);
+					sampleRateSet = true;
+					break;
+				}
+			}
+
+			if (!sampleRateSet) {
+				std::cerr << "Your device is not compatible with sampleRate \"" << sampleRate << "\"" << std::endl;
+				return 1;
+			}
+
+			std::cout << "Airspy " << (isMini ? "Mini " : "R2 ")
+					<< "detected. Sample rate set to " << device->GetSampleRate()
+					<< std::endl;
+
+		} else if (parser[CFG_DEVICE_TYPE] == "cfile") {
+			if (!parser.hasKey(CFG_FILENAME)) {
+				std::cerr << "Device Type defined as \"cfile\" but no \"filename\" specified." << std::endl;
+				return 1;
+			}
+			device = new CFileFrontend(parser[CFG_FILENAME]);
+			device->SetCenterFrequency(parser.getUInt(CFG_FREQUENCY));
+			device->SetSampleRate(parser.getUInt(CFG_SAMPLE_RATE));
+		} else if (parser[CFG_DEVICE_TYPE] == "wav") {
+			std::cerr << "WAV Reader not implemented." << std::endl;
+			return 1;
 		}
-	}
-
-	if (!sampleRateSet) {
-		std::cerr << "Your device is not compatible with sampleRate \"" << sampleRate << "\"" << std::endl;
+	} else {
+		std::cerr << "Input Device Type not specified in config file." << std::endl;
 		return 1;
 	}
 
-	std::cout << "Airspy " << (isMini ? "Mini " : "R2 ")
-			<< "detected. Sample rate set to " << airspy.GetSampleRate()
-			<< std::endl;
 
-	airspy.SetSamplesAvailableCallback(onSamplesAvailable);
+	device->SetSamplesAvailableCallback(onSamplesAvailable);
 
-	float circuitSampleRate = airspy.GetSampleRate() / ((float) baseDecimation);
+	float circuitSampleRate = device->GetSampleRate() / ((float) baseDecimation);
 	float sps = circuitSampleRate / ((float) symbolRate);
 
 	std::cout << "Samples per Symbol: " << sps << std::endl;
@@ -266,7 +314,7 @@ int main(int argc, char **argv) {
 	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate / 2 << std::endl;
 
 	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, symbolRate, rrcAlpha, RRC_TAPS);
-	std::vector<float> decimatorTaps = Filters::lowPass(1, airspy.GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
+	std::vector<float> decimatorTaps = Filters::lowPass(1, device->GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
 
 	decimator = new FirFilter(baseDecimation, decimatorTaps);
 	agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
@@ -281,18 +329,19 @@ int main(int argc, char **argv) {
 		std::cout << "	VGA Gain: " << vgaGain << std::endl;
 		std::cout << "	MIX Gain: " << mixerGain << std::endl;
 	}
-	airspy.SetCenterFrequency(centerFrequency);
+
+	device->SetCenterFrequency(centerFrequency);
 	if (agcEnable) {
-		airspy.SetAGC(true);
+		device->SetAGC(true);
 	} else {
-		airspy.SetAGC(false);
-		airspy.SetMixerGain(lnaGain);
-		airspy.SetLNAGain(vgaGain);
-		airspy.SetVGAGain(mixerGain);
+		device->SetAGC(false);
+		device->SetMixerGain(lnaGain);
+		device->SetLNAGain(vgaGain);
+		device->SetVGAGain(mixerGain);
 	}
 
-	std::cout << "Starting Airspy" << std::endl;
-	airspy.Start();
+	std::cout << "Starting " << device->GetName() << std::endl;
+	device->Start();
 	running = true;
 
 	std::thread symbolThread(&symbolLoopFunc);
@@ -306,7 +355,7 @@ int main(int argc, char **argv) {
 	}
 
 	std::cout << "Stopping Airspy" << std::endl;
-	airspy.Stop();
+	device->Stop();
 
 	std::cout << "Stopping Symbol Processing Thread" << std::endl;
 	symbolThread.join();
@@ -317,6 +366,7 @@ int main(int argc, char **argv) {
 	delete costasLoop;
 	delete clockRecovery;
 	delete rrcFilter;
+	delete device;
 
 	return 0;
 }

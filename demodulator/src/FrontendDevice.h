@@ -9,6 +9,7 @@
 #define SRC_FRONTENDDEVICE_H_
 
 #define FRONTEND_SAMPLETYPE_FLOATIQ 0
+#define FRONTEND_SAMPLETYPE_S16IQ 1
 
 #include <cstdint>
 #include <functional>

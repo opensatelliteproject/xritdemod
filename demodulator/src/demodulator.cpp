@@ -17,13 +17,11 @@
 #include "AirspyDevice.h"
 #include "CFileFrontend.h"
 #include "SymbolManager.h"
-#include "SampleFIFO.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
 
 #include "Parameters.h"
-
 
 FrontendDevice *device;
 AGC *agc;
@@ -32,7 +30,7 @@ ClockRecovery *clockRecovery;
 FirFilter *rrcFilter;
 FirFilter *decimator;
 SymbolManager symbolManager;
-SampleFIFO samplesFifo(FIFO_SIZE);
+CircularBuffer<float> samplesFifo(FIFO_SIZE);
 
 int baseDecimation;
 
@@ -50,13 +48,18 @@ uint32_t startTime = 0;
 void onSamplesAvailable(void *fdata, int length, int type) {
 	if (type == FRONTEND_SAMPLETYPE_FLOATIQ) {
 		samplesFifo.addSamples((float *) fdata, length * 2);
+	} else if (type == FRONTEND_SAMPLETYPE_S16IQ) {
+		for (int i=0; i<length*2; i++) {
+			int16_t *d = (int16_t *)fdata;
+			samplesFifo.addSample(d[i] / 32768.f);
+		}
 	} else {
 		std::cerr << "Unknown sample type: " << type << std::endl;
 	}
 }
 
 void checkAndResizeBuffers(int length) {
-	if (sampleDataLength != length) {
+	if (sampleDataLength < length) {
 		std::cout << "Allocating Sample Buffer with size " << length
 				<< " (it was " << sampleDataLength << " before)" << std::endl;
 		if (buffer0 != NULL) {
@@ -180,6 +183,12 @@ int main(int argc, char **argv) {
 	uint32_t symbolRate, centerFrequency, sampleRate;
 	uint8_t lnaGain = 15, vgaGain = 15, mixerGain = 15;
 	bool agcEnable = false;
+
+	std::cout << "xRIT Demodulator - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
+	std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
+	std::cout << "  SatHelper Version: " << SatHelper::Info::GetVersion() << " - " << SatHelper::Info::GetGitSHA1() << std::endl;
+	std::cout << "  SatHelper Compilation Date/Time: " << SatHelper::Info::GetCompilationDate() << " - " << SatHelper::Info::GetCompilationTime() << std::endl;
+	std::cout << std::endl;
 
 	if (!parser.LoadFile()) {
 		// Add defaults to LRIT

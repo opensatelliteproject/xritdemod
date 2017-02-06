@@ -64,4 +64,20 @@
 #define CFG_DEVICE_TYPE "deviceType"
 #define CFG_FILENAME "filename"
 
+
+// Compilation parameters
+
+#ifndef MAJOR_VERSION
+#define MAJOR_VERSION unk
+#endif
+#ifndef MINOR_VERSION
+#define MINOR_VERSION unk
+#endif
+#ifndef MAINT_VERSION
+#define MAINT_VERSION unk
+#endif
+#ifndef GIT_SHA1
+#define GIT_SHA1 unk
+#endif
+
 #endif /* SRC_PARAMETERS_H_ */

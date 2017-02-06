@@ -25,6 +25,26 @@
 
 using namespace std;
 
+
+// Compilation parameters
+
+#define Q(x) #x
+#define QUOTE(x) Q(x)
+
+#ifndef MAJOR_VERSION
+#define MAJOR_VERSION unk
+#endif
+#ifndef MINOR_VERSION
+#define MINOR_VERSION unk
+#endif
+#ifndef MAINT_VERSION
+#define MAINT_VERSION unk
+#endif
+#ifndef GIT_SHA1
+#define GIT_SHA1 unk
+#endif
+
+
 //#define DUMP_CORRUPTED_PACKETS
 #define USE_LAST_FRAME_DATA
 //#define DEBUG_MODE
@@ -94,6 +114,12 @@ int main(int argc, char **argv) {
     ChannelWriter channelWriter("channels");
 
     Display display;
+
+    std::cout << "xRIT Decoder - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
+    std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
+    std::cout << "  SatHelper Version: " << SatHelper::Info::GetVersion() << " - " << SatHelper::Info::GetGitSHA1() << std::endl;
+    std::cout << "  SatHelper Compilation Date/Time: " << SatHelper::Info::GetCompilationDate() << " - " << SatHelper::Info::GetCompilationTime() << std::endl;
+    std::cout << std::endl;
 
     reedSolomon.SetCopyParityToOutput(true);
 

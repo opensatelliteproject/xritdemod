@@ -2,6 +2,10 @@ cmake_minimum_required (VERSION 2.6)
 project (xritDecoder)
 enable_language(CXX)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
 # C++11 Macro
 macro(use_cxx11)
   if (CMAKE_VERSION VERSION_LESS "3.1")
@@ -20,9 +24,14 @@ set(VERSION_INFO_MAJOR_VERSION 1)
 set(VERSION_INFO_MINOR_VERSION 0)
 set(VERSION_INFO_MAINT_VERSION 0git)
 
+add_definitions(-DMAJOR_VERSION=${VERSION_INFO_MAJOR_VERSION})
+add_definitions(-DMINOR_VERSION=${VERSION_INFO_MINOR_VERSION})
+add_definitions(-DMAINT_VERSION=${VERSION_INFO_MAINT_VERSION})
+add_definitions(-DGIT_SHA1=${GIT_SHA1})
+
 # Flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3")
 set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 

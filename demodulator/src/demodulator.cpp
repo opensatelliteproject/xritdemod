@@ -17,6 +17,7 @@
 #include "AirspyDevice.h"
 #include "CFileFrontend.h"
 #include "SymbolManager.h"
+#include "DiagManager.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
@@ -31,6 +32,7 @@ FirFilter *rrcFilter;
 FirFilter *decimator;
 SymbolManager symbolManager;
 CircularBuffer<float> samplesFifo(FIFO_SIZE);
+DiagManager *diagManager = NULL;
 
 int baseDecimation;
 
@@ -136,6 +138,10 @@ void processSamples() {
 	swapBuffers(&ba, &bb);
 
 	symbolManager.add(ba, symbols);
+
+	if (diagManager != NULL) {
+		diagManager->addSamples((float *)ba, symbols < 1024 ? symbols : 1024);
+	}
 }
 
 void symbolLoopFunc() {
@@ -174,6 +180,7 @@ void setDefaults(ConfigParser &parser) {
 	parser[CFG_MIXER_GAIN] = std::string(QUOTE(DEFAULT_MIX_GAIN));
 	parser[CFG_VGA_GAIN] = std::string(QUOTE(DEFAULT_VGA_GAIN));
 	parser[CFG_DEVICE_TYPE] = std::string("airspy");
+	parser[CFG_CONSTELLATION] = std::string("true");
 	parser.SaveFile();
 }
 
@@ -183,6 +190,7 @@ int main(int argc, char **argv) {
 	uint32_t symbolRate, centerFrequency, sampleRate;
 	uint8_t lnaGain = 15, vgaGain = 15, mixerGain = 15;
 	bool agcEnable = false;
+	bool constellationEnable = true;
 
 	std::cout << "xRIT Demodulator - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
 	std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
@@ -209,6 +217,10 @@ int main(int argc, char **argv) {
 			std::cerr << "Invalid mode specified: " << parser[CFG_MODE] << std::endl;
 			return 1;
 		}
+	}
+
+	if (parser.hasKey(CFG_CONSTELLATION)) {
+		constellationEnable = parser.getBool(CFG_CONSTELLATION);
 	}
 
 	if (parser.hasKey(CFG_SYMBOL_RATE)) {
@@ -312,6 +324,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	if (constellationEnable) {
+		diagManager = new DiagManager(0.01);
+	}
 
 	device->SetSamplesAvailableCallback(onSamplesAvailable);
 

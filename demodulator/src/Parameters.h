@@ -63,6 +63,7 @@
 #define CFG_VGA_GAIN "vgaGain"
 #define CFG_DEVICE_TYPE "deviceType"
 #define CFG_FILENAME "filename"
+#define CFG_CONSTELLATION "sendConstellation"
 
 
 // Compilation parameters

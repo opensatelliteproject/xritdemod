@@ -2,7 +2,7 @@
  * StatisticsDispatcher.h
  *
  *  Created on: 01/12/2016
- *      Author: lucas
+ *      Author: Lucas Teske
  */
 
 #ifndef STATISTICSDISPATCHER_H_
@@ -21,8 +21,10 @@ private:
 
     void dataThreadLoop();
     SatHelper::TcpServer server;
+    int port;
+
 public:
-    StatisticsDispatcher();
+    StatisticsDispatcher(int port);
     ~StatisticsDispatcher();
 
     inline void Update(const Statistics &statistics) {

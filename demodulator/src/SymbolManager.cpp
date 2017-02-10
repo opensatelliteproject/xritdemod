@@ -12,8 +12,8 @@
 
 namespace OpenSatelliteProject {
 
-SymbolManager::SymbolManager() :
-		client(std::string("127.0.0.1"), 5000) {
+SymbolManager::SymbolManager(std::string &address, int port) :
+		client(address, port) {
 	buffer = new char[SM_SOCKET_BUFFER_SIZE];
 	inBufferLength = 0;
 	isConnected = false;
@@ -25,14 +25,13 @@ SymbolManager::~SymbolManager() {
 
 void SymbolManager::process() {
 	if (!isConnected) {
-		std::cout << "Trying to connect to decoder at port 5000" << std::endl;
+		std::cout << "Trying to connect to decoder at " << client.GetAddress().ToString() << ":" << client.GetPort() << std::endl;
 		try {
 			client.Connect();
 			isConnected = true;
 		} catch (SatHelper::SocketConnectException &e) {
 			isConnected = false;
-			std::cerr << "Error connecting to localhost:5000: " << e.reason()
-					<< std::endl;
+			std::cerr << "Error connecting to " << client.GetAddress().ToString() << ":" << client.GetPort() << " : " << e.reason() << std::endl;
 			sleep(1);
 		}
 	}

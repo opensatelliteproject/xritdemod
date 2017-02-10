@@ -30,7 +30,7 @@ CostasLoop *costasLoop;
 ClockRecovery *clockRecovery;
 FirFilter *rrcFilter;
 FirFilter *decimator;
-SymbolManager symbolManager;
+SymbolManager *symbolManager;
 CircularBuffer<float> samplesFifo(FIFO_SIZE);
 DiagManager *diagManager = NULL;
 
@@ -137,7 +137,7 @@ void processSamples() {
 	int symbols = clockRecovery->Work(ba, bb, length);
 	swapBuffers(&ba, &bb);
 
-	symbolManager.add(ba, symbols);
+	symbolManager->add(ba, symbols);
 
 	if (diagManager != NULL) {
 		diagManager->addSamples((float *)ba, symbols < 1024 ? symbols : 1024);
@@ -181,6 +181,8 @@ void setDefaults(ConfigParser &parser) {
 	parser[CFG_VGA_GAIN] = std::string(QUOTE(DEFAULT_VGA_GAIN));
 	parser[CFG_DEVICE_TYPE] = std::string("airspy");
 	parser[CFG_CONSTELLATION] = std::string("true");
+	parser[CFG_DECODER_ADDRESS] = std::string(DEFAULT_DECODER_ADDRESS);
+	parser[CFG_DECODER_PORT] = std::string(QUOTE(DEFAULT_DECODER_PORT));
 	parser.SaveFile();
 }
 
@@ -191,6 +193,9 @@ int main(int argc, char **argv) {
 	uint8_t lnaGain = 15, vgaGain = 15, mixerGain = 15;
 	bool agcEnable = false;
 	bool constellationEnable = true;
+	float pllAlpha = CLOCK_ALPHA;
+	std::string decoderAddress(DEFAULT_DECODER_ADDRESS);
+	int decoderPort = DEFAULT_DECODER_PORT;
 
 	std::cout << "xRIT Demodulator - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
 	std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
@@ -217,6 +222,11 @@ int main(int argc, char **argv) {
 			std::cerr << "Invalid mode specified: " << parser[CFG_MODE] << std::endl;
 			return 1;
 		}
+	}
+
+	if (parser.hasKey(CFG_PLL_ALPHA)) {
+		std::cout << "Warning: PLL Alpha is not the default one. Use with care." << std::endl;
+		pllAlpha = parser.getFloat(CFG_PLL_ALPHA);
 	}
 
 	if (parser.hasKey(CFG_CONSTELLATION)) {
@@ -257,6 +267,14 @@ int main(int argc, char **argv) {
 	} else {
 		std::cerr << "Field \"decimation\" is missing on config file." << std::endl;
 		return 1;
+	}
+
+	if (parser.hasKey(CFG_DECODER_ADDRESS)) {
+		decoderAddress = parser.get(CFG_DECODER_ADDRESS);
+	}
+
+	if (parser.hasKey(CFG_DECODER_PORT)) {
+		decoderPort = parser.getInt(CFG_DECODER_PORT);
 	}
 
 	if (parser.hasKey(CFG_LNA_GAIN)) {
@@ -342,9 +360,10 @@ int main(int argc, char **argv) {
 
 	decimator = new FirFilter(baseDecimation, decimatorTaps);
 	agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
-	costasLoop = new CostasLoop(PLL_ALPHA, LOOP_ORDER);
+	costasLoop = new CostasLoop(pllAlpha, LOOP_ORDER);
 	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU, CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
 	rrcFilter = new FirFilter(1, rrcTaps);
+	symbolManager = new SymbolManager(decoderAddress, decoderPort);
 
 	std::cout << "Center Frequency: " << (centerFrequency / 1000000.0) << " MHz" << std::endl;
 	std::cout << "Automatic Gain Control: " << (agcEnable ? "Enabled" : "Disabled") << std::endl;
@@ -371,9 +390,9 @@ int main(int argc, char **argv) {
 	std::thread symbolThread(&symbolLoopFunc);
 
 	while (running) {
-		int siq = symbolManager.symbolsInQueue();
+		int siq = symbolManager->symbolsInQueue();
 		if (siq > 0) {
-			symbolManager.process();
+			symbolManager->process();
 		}
 		usleep(1);	// Let's not waste CPU time
 	}
@@ -391,6 +410,7 @@ int main(int argc, char **argv) {
 	delete clockRecovery;
 	delete rrcFilter;
 	delete device;
+	delete symbolManager;
 
 	return 0;
 }

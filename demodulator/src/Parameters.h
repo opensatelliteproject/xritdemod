@@ -26,7 +26,7 @@
 // Loop Settings
 #define LOOP_ORDER 2
 #define RRC_TAPS 63
-#define PLL_ALPHA 0.025
+#define PLL_ALPHA 0.0025
 #define CLOCK_ALPHA 0.0037
 #define CLOCK_MU 0.5
 #define CLOCK_OMEGA_LIMIT 0.005
@@ -40,6 +40,9 @@
 #define AIRSPY_R2_DEFAULT_SAMPLERATE   2500000
 #define DEFAULT_SAMPLE_RATE AIRSPY_MINI_DEFAULT_SAMPLERATE
 #define DEFAULT_DECIMATION 1
+
+#define DEFAULT_DECODER_ADDRESS "127.0.0.1"
+#define DEFAULT_DECODER_PORT 5000
 
 #define DEFAULT_LNA_GAIN 5
 #define DEFAULT_VGA_GAIN 5
@@ -64,7 +67,9 @@
 #define CFG_DEVICE_TYPE "deviceType"
 #define CFG_FILENAME "filename"
 #define CFG_CONSTELLATION "sendConstellation"
-
+#define CFG_PLL_ALPHA "pllAlpha"
+#define CFG_DECODER_ADDRESS "decoderAddress"
+#define CFG_DECODER_PORT "decoderPort"
 
 // Compilation parameters
 

@@ -26,9 +26,9 @@ private:
     std::atomic_bool running;
     void dataThreadLoop();
     SatHelper::TcpServer server;
-
+    int port;
 public:
-    ChannelDispatcher();
+    ChannelDispatcher(int port);
     virtual ~ChannelDispatcher();
 
     void add(char *data, int length);

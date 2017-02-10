@@ -12,9 +12,9 @@
 
 #define LOOP_DELAY 100
 
-StatisticsDispatcher::StatisticsDispatcher() {
-    std::cout << "Starting Statistics Dispatcher at port 5002\n";
-    server.Listen(5002, true);
+StatisticsDispatcher::StatisticsDispatcher(int port) : port(port) {
+    std::cout << "Starting Statistics Dispatcher at port " << port << std::endl;
+    server.Listen(port, true);
 }
 
 StatisticsDispatcher::~StatisticsDispatcher() {

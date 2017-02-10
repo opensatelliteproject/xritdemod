@@ -30,7 +30,7 @@ private:
     bool isConnected;
 
 public:
-	SymbolManager();
+	SymbolManager(std::string &address, int port);
 	virtual ~SymbolManager();
     void add(float *data, int length);
     void add(std::complex<float> *data, int length);

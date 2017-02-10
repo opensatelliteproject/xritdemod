@@ -1,9 +1,9 @@
 //============================================================================
-// Name        : GOES LRIT Decoder
+// Name        : GOES xRIT Decoder
 // Author      : Lucas Teske
 // Version     : 1.0
 // Copyright   : Copyright 2016
-// Description : GOES LRIT Decoder
+// Description : GOES xRIT Decoder
 //============================================================================
 
 #include <iostream>
@@ -14,6 +14,7 @@
 #include "ChannelWriter.h"
 #include "ChannelDispatcher.h"
 #include "StatisticsDispatcher.h"
+#include "parameters.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -25,53 +26,28 @@
 
 using namespace std;
 
+const uint64_t HRIT_UW0 = 0xfc4ef4fd0cc2df89;
+const uint64_t HRIT_UW2 = 0x25010b02f33d2076;
+const uint64_t LRIT_UW0 = 0xfca2b63db00d9794;
+const uint64_t LRIT_UW2 = 0x035d49c24ff2686b;
 
-// Compilation parameters
+void setDefaults(SatHelper::ConfigParser &parser) {
+    parser[CFG_MODE] = "lrit";
+    parser[CFG_DISPLAY] = "false";
+    parser[CFG_DEMOD_PORT] = QUOTE(DEFAULT_DEMODULATOR_PORT);
+    parser[CFG_VCHANNEL_PORT] = QUOTE(DEFAULT_VCHANNEL_PORT);
+    parser[CFG_STATISTICS_PORT] = QUOTE(DEFAULT_STATISTICS_PORT);
 
-#define Q(x) #x
-#define QUOTE(x) Q(x)
-
-#ifndef MAJOR_VERSION
-#define MAJOR_VERSION unk
-#endif
-#ifndef MINOR_VERSION
-#define MINOR_VERSION unk
-#endif
-#ifndef MAINT_VERSION
-#define MAINT_VERSION unk
-#endif
-#ifndef GIT_SHA1
-#define GIT_SHA1 unk
-#endif
-
-
-//#define DUMP_CORRUPTED_PACKETS
-#define USE_LAST_FRAME_DATA
-//#define DEBUG_MODE
-#define HRIT
-
-#define FRAMESIZE 1024
-#define FRAMEBITS (FRAMESIZE * 8)
-#define CODEDFRAMESIZE (FRAMEBITS * 2)
-#define MINCORRELATIONBITS 46
-#define RSBLOCKS 4
-#define RSPARITYSIZE 32
-#define RSPARITYBLOCK (RSPARITYSIZE * RSBLOCKS)
-#define SYNCWORDSIZE 32
-#define LASTFRAMEDATABITS 64
-#define LASTFRAMEDATA (LASTFRAMEDATABITS / 8)
-#define TIMEOUT 2
-#define FLYWHEELRECHECK 4
-
-#ifdef HRIT
-const uint64_t UW0 = 0xfc4ef4fd0cc2df89;
-const uint64_t UW2 = 0x25010b02f33d2076;
-#else
-const uint64_t UW0 = 0xfca2b63db00d9794;
-const uint64_t UW2 = 0x035d49c24ff2686b;
-#endif
+    parser.SaveFile();
+}
 
 int main(int argc, char **argv) {
+    SatHelper::ConfigParser parser("xritdecoder.cfg");
+    bool lritMode = true;
+    int demodulatorPort = DEFAULT_DEMODULATOR_PORT;
+    int vChannelPort = DEFAULT_VCHANNEL_PORT;
+    int statisticsPort = DEFAULT_STATISTICS_PORT;
+
 #ifdef USE_LAST_FRAME_DATA
     uint8_t viterbiData[CODEDFRAMESIZE + LASTFRAMEDATABITS];
     uint8_t vitdecData[FRAMESIZE + LASTFRAMEDATA];
@@ -101,14 +77,17 @@ int main(int argc, char **argv) {
     bool isCorrupted = false;
     bool lastFrameOK = false;
     int flywheelCount = 0;
+    int flywheelRecheck = DEFAULT_FLYWHEEL_RECHECK;
 
     SatHelper::Correlator correlator;
     SatHelper::PacketFixer packetFixer;
+
 #ifdef USE_LAST_FRAME_DATA
     SatHelper::Viterbi27 viterbi(FRAMEBITS + LASTFRAMEDATABITS);
 #else
     SatHelper::Viterbi27 viterbi(FRAMEBITS);
 #endif
+
     SatHelper::ReedSolomon reedSolomon;
     SatHelper::DeRandomizer deRandomizer;
     ChannelWriter channelWriter("channels");
@@ -120,22 +99,42 @@ int main(int argc, char **argv) {
     std::cout << "  SatHelper Version: " << SatHelper::Info::GetVersion() << " - " << SatHelper::Info::GetGitSHA1() << std::endl;
     std::cout << "  SatHelper Compilation Date/Time: " << SatHelper::Info::GetCompilationDate() << " - " << SatHelper::Info::GetCompilationTime() << std::endl;
     std::cout << std::endl;
+    std::cout << std::endl;
+
+    // Load Configuration
+    if (!parser.LoadFile()) {
+        std::cout << "No config file found. Defaulting to LRIT and creating config file." << std::endl;
+        std::cout << "The config file will be created with both \"mode\" and specific parameters. " << std::endl;
+        setDefaults(parser);
+    }
+
+    if (parser.hasKey(CFG_MODE)) {
+        lritMode = parser.get(CFG_MODE) == "lrit";
+    }
+
+    if (parser.hasKey(CFG_DISPLAY)) {
+        runUi = parser.getBool(CFG_DISPLAY);
+    }
+
+    if (parser.hasKey(CFG_DUMP_PACKET)) {
+        dump = parser.getBool(CFG_DUMP_PACKET);
+    }
+
+    if (parser.hasKey(CFG_DEMOD_PORT)) {
+        demodulatorPort = parser.getInt(CFG_DEMOD_PORT);
+    }
+
+    if (parser.hasKey(CFG_VCHANNEL_PORT)) {
+        vChannelPort = parser.getInt((CFG_VCHANNEL_PORT));
+    }
+
+    if (parser.hasKey(CFG_STATISTICS_PORT)) {
+        statisticsPort = parser.getInt(CFG_STATISTICS_PORT);
+    }
+
+    // Set Defaults
 
     reedSolomon.SetCopyParityToOutput(true);
-
-    if (argc > 1) {
-        std::string ui(argv[1]);
-        if (ui == "display") {
-            runUi = true;
-        }
-    }
-
-    if (argc > 2) {
-        std::string dumppacket(argv[2]);
-        if (dumppacket == "dump") {
-            dump = true;
-        }
-    }
 
     for (int i = 0; i < 256; i++) {
         lostPacketsPerFrame[i] = 0;
@@ -149,17 +148,23 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    correlator.addWord(UW0);
-    correlator.addWord(UW2);
-
+    if (lritMode) {
+        correlator.addWord(LRIT_UW0);
+        correlator.addWord(LRIT_UW2);
+    } else {
+        correlator.addWord(HRIT_UW0);
+        correlator.addWord(HRIT_UW2);
+    }
     // Dispatchers
-    ChannelDispatcher channelDispatcher;
-    StatisticsDispatcher statisticsDispatcher;
+    ChannelDispatcher channelDispatcher(vChannelPort);
+    StatisticsDispatcher statisticsDispatcher(statisticsPort);
 
     // Socket Init
     SatHelper::TcpServer tcpServer;
-    cout << "Starting Demod Receiver at port 5000\n";
-    tcpServer.Listen(5000);
+    cout << "Starting Demod Receiver at port " << demodulatorPort << std::endl;
+    tcpServer.Listen(demodulatorPort);
+
+    // Main Loop
 
     while (true) {
         cout << "Waiting for a client connection" << endl;
@@ -178,7 +183,7 @@ int main(int argc, char **argv) {
                 client.WaitForData(CODEDFRAMESIZE, TIMEOUT);
                 client.Receive((char *) codedData, chunkSize);
 
-                if (flywheelCount == FLYWHEELRECHECK) {
+                if (flywheelCount == flywheelRecheck) {
                     lastFrameOK = false;
                     flywheelCount = 0;
                 }
@@ -225,11 +230,12 @@ int main(int argc, char **argv) {
                     client.Receive((char *) (codedData + CODEDFRAMESIZE - pos), chunkSize);
                 }
 
-#ifndef HRIT
+
                 // Fix Phase Shift
                 // HRIT uses differential encoding (NRZ-M) so it doesn't need phase correction
-                packetFixer.fixPacket(codedData, CODEDFRAMESIZE, phaseShift, false);
-#endif
+                if (lritMode) {
+                    packetFixer.fixPacket(codedData, CODEDFRAMESIZE, phaseShift, false);
+                }
 
 #ifdef USE_LAST_FRAME_DATA
                 // Shift data and add previous values.
@@ -241,14 +247,14 @@ int main(int argc, char **argv) {
                 //
 #ifdef USE_LAST_FRAME_DATA
                 viterbi.decode(viterbiData, decodedData);
-#   ifdef HRIT
-                SatHelper::DifferentialEncoding::nrzmDecode(decodedData, FRAMESIZE + LASTFRAMEDATA);
-#   endif
+                if (!lritMode) {
+                    SatHelper::DifferentialEncoding::nrzmDecode(decodedData, FRAMESIZE + LASTFRAMEDATA);
+                }
 #else
                 viterbi.decode(codedData, decodedData);
-#   ifdef HRIT
-                SatHelper::DifferentialEncoding::nrzmDecode(decodedData, FRAMESIZE);
-#   endif
+                if (!lritMode) {
+                    SatHelper::DifferentialEncoding::nrzmDecode(decodedData, FRAMESIZE);
+                }
 #endif
                 float signalErrors = viterbi.GetPercentBER();
                 signalErrors = 100 - (signalErrors * 10);

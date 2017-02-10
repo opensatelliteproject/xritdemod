@@ -40,13 +40,20 @@ add_executable (${PROJECT_NAME} ${SOURCES})
 
 # Links
 target_link_libraries (${PROJECT_NAME} SatHelper.a)
-target_link_libraries (${PROJECT_NAME} pthread)
-target_link_libraries (${PROJECT_NAME} airspy)
-target_link_libraries (${PROJECT_NAME} usb-1.0)
 if(WIN32)
   target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static")
+  target_link_libraries (${PROJECT_NAME} airspy.a)
+  target_link_libraries (${PROJECT_NAME} usb-1.0.a)
+  target_link_libraries (${PROJECT_NAME} pthread.a)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc -static-libstdc++")
+else()
+  target_link_libraries (${PROJECT_NAME} airspy)
+  target_link_libraries (${PROJECT_NAME} usb-1.0)
+  target_link_libraries (${PROJECT_NAME} pthread)
 endif()
+
 
 # Install library
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

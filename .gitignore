@@ -1,2 +1,8 @@
 libsathelper
 libcorrect
+.vs
+correct
+sathelper
+Debug
+Release
+*.VC.*

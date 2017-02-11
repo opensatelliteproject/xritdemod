@@ -40,7 +40,7 @@ void ChannelDispatcher::dataThreadLoop() {
         try {
             SatHelper::TcpSocket newClient = server.Accept();
             clients.push_back(newClient);
-        } catch (SatHelper::SocketAcceptException &e) {
+        } catch (SatHelper::SocketAcceptException) {
             // No new client.
         }
 
@@ -52,7 +52,7 @@ void ChannelDispatcher::dataThreadLoop() {
                 for (SatHelper::TcpSocket &client : clients) {
                     try {
                         client.Send(packet->data, packet->length);
-                    } catch (SatHelper::ClientDisconnectedException &c) {
+                    } catch (SatHelper::ClientDisconnectedException) {
                         std::cout << "One client has been disconnected.\n";
                         toRemove.push_back(client);
                     } catch (SatHelper::SocketException &e) {

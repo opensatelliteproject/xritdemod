@@ -27,7 +27,7 @@ void StatisticsDispatcher::Work() {
     try {
         SatHelper::TcpSocket newClient = server.Accept();
         clients.push_back(newClient);
-    } catch (SatHelper::SocketAcceptException &e) {
+    } catch (SatHelper::SocketAcceptException) {
         // No new client.
     }
 
@@ -36,15 +36,15 @@ void StatisticsDispatcher::Work() {
         for (SatHelper::TcpSocket &client: clients) {
             try {
                 client.Send((char *)&statistics.GetData(), sizeof(Statistics_st));
-            } catch (SatHelper::ClientDisconnectedException &c) {
+            } catch (SatHelper::ClientDisconnectedException) {
                 std::cout << "One client has been disconnected.\n";
                 toRemove.push_back(client);
                 client.Close();
-            } catch (SatHelper::NotAllDataSentException &e) {
+            } catch (SatHelper::NotAllDataSentException) {
                 std::cout << "Not all data sent\n";
                 toRemove.push_back(client);
                 client.Close();
-            } catch (SatHelper::SocketWriteException &e) {
+            } catch (SatHelper::SocketWriteException) {
                 std::cout << "Socket Write Exception\n";
                 toRemove.push_back(client);
                 client.Close();

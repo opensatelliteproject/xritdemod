@@ -44,8 +44,10 @@ void DiagManager::threadLoop() {
 				// TODO: Send to 2+ clients
 				try {
 					socket.SendTo(&data[0], 1024, SatHelper::IPAddress::localhost, 9000);
+				} catch (SatHelper::SocketWriteException &e) {
+					std::cerr << "Socket write exception: " << e.reason() << std::endl;
 				} catch (SatHelper::SocketException &e) {
-					std::cerr << "Error sending DiagSamples" << std::endl;
+					std::cerr << "Error sending DiagSamples: " << e.reason() << std::endl;
 				}
 				t0 = std::chrono::high_resolution_clock::now();
 			}

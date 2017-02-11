@@ -23,7 +23,7 @@ private:
 	void threadLoop();
 
 	std::thread *mainThread;
-	std::chrono::time_point<std::chrono::system_clock> t0;
+	std::chrono::time_point<std::chrono::high_resolution_clock> t0;
 	std::atomic_bool running;
 	SatHelper::UdpSocket socket;
 	float interval;

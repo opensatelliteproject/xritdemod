@@ -147,7 +147,7 @@ void processSamples() {
 void symbolLoopFunc() {
 	while (running) {
 		processSamples();
-		usleep(1);	// Let's not waste CPU time
+		std::this_thread::sleep_for(std::chrono::microseconds(1)); // Let's not waste CPU time
 	}
 }
 
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
 	uint8_t lnaGain = 15, vgaGain = 15, mixerGain = 15;
 	bool agcEnable = false;
 	bool constellationEnable = true;
-	float pllAlpha = CLOCK_ALPHA;
+	float pllAlpha = (float)CLOCK_ALPHA;
 	std::string decoderAddress(DEFAULT_DECODER_ADDRESS);
 	int decoderPort = DEFAULT_DECODER_PORT;
 
@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (constellationEnable) {
-		diagManager = new DiagManager(0.01);
+		diagManager = new DiagManager(0.01f);
 	}
 
 	device->SetSamplesAvailableCallback(onSamplesAvailable);
@@ -394,7 +394,7 @@ int main(int argc, char **argv) {
 		if (siq > 0) {
 			symbolManager->process();
 		}
-		usleep(1);	// Let's not waste CPU time
+		std::this_thread::sleep_for(std::chrono::microseconds(10)); // Let's not waste CPU time
 	}
 
 	std::cout << "Stopping Airspy" << std::endl;

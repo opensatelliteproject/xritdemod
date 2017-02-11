@@ -22,7 +22,7 @@ class CFileFrontend: public FrontendDevice {
 private:
 	std::function<void(void *data, int length, int type)> cb;
 	std::thread *mainThread;
-	std::chrono::time_point<std::chrono::system_clock> t0;
+	std::chrono::time_point<std::chrono::high_resolution_clock> t0;
 	std::string filename;
 
     std::atomic_bool running;

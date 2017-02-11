@@ -26,14 +26,14 @@
 // Loop Settings
 #define LOOP_ORDER 2
 #define RRC_TAPS 63
-#define PLL_ALPHA 0.0025
-#define CLOCK_ALPHA 0.0037
-#define CLOCK_MU 0.5
-#define CLOCK_OMEGA_LIMIT 0.005
+#define PLL_ALPHA 0.0025f
+#define CLOCK_ALPHA 0.0037f
+#define CLOCK_MU 0.5f
+#define CLOCK_OMEGA_LIMIT 0.005f
 #define CLOCK_GAIN_OMEGA (CLOCK_ALPHA * CLOCK_ALPHA) / 4.0
-#define AGC_RATE 0.01
-#define AGC_REFERENCE 0.5
-#define AGC_GAIN 1
+#define AGC_RATE 0.01f
+#define AGC_REFERENCE 0.5f
+#define AGC_GAIN 1.f
 #define AGC_MAX_GAIN 4000
 
 #define AIRSPY_MINI_DEFAULT_SAMPLERATE 3000000

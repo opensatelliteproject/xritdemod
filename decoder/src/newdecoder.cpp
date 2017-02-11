@@ -168,8 +168,14 @@ int main(int argc, char **argv) {
 
     while (true) {
         cout << "Waiting for a client connection" << endl;
+		SatHelper::TcpSocket client;
+		try {
+	        client = tcpServer.Accept();
+		} catch (SatHelper::SocketAcceptException &e) {
+			std::cerr << "Error acceppting client: " << e.reason() << std::endl;
+			continue;
+		}
 
-        SatHelper::TcpSocket client = tcpServer.Accept();
         cout << "Client connected!" << endl;
 
         if (runUi) {
@@ -327,7 +333,7 @@ int main(int argc, char **argv) {
                     channelDispatcher.add((char *) rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE / 8));
 
                     if (lastPacketCount[vcid] + 1 != counter && lastPacketCount[vcid] > -1) {
-                        int lostCount = counter - lastPacketCount[vcid] - 1;
+                        int lostCount = (int)(counter - lastPacketCount[vcid] - 1);
                         lostPackets += lostCount;
                         lostPacketsPerFrame[vcid] += lostCount;
                     }

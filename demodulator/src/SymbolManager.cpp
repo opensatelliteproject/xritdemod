@@ -6,9 +6,11 @@
  */
 
 #include "SymbolManager.h"
+#include "Parameters.h"
 #include <chrono>
 #include <iostream>
 #include <algorithm>
+
 
 namespace OpenSatelliteProject {
 
@@ -32,7 +34,7 @@ void SymbolManager::process() {
 		} catch (SatHelper::SocketConnectException &e) {
 			isConnected = false;
 			std::cerr << "Error connecting to " << client.GetAddress().ToString() << ":" << client.GetPort() << " : " << e.reason() << std::endl;
-			sleep(1);
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 
@@ -57,7 +59,7 @@ void SymbolManager::process() {
 		if (inBufferLength > 0) {
 			try {
 				client.Send(buffer, inBufferLength);
-			} catch (SatHelper::ClientDisconnectedException &c) {
+			} catch (SatHelper::ClientDisconnectedException) {
 				std::cout << "Disconnected from decoder.\n";
 				isConnected = false;
 				client.Close();

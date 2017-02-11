@@ -6,6 +6,7 @@
  */
 
 #include "DiagManager.h"
+#include "Parameters.h"
 
 DiagManager::DiagManager(float interval) : buffer(DM_BUFFER_SIZE), interval(interval) {
 	running = true;
@@ -52,7 +53,7 @@ void DiagManager::threadLoop() {
 				t0 = std::chrono::high_resolution_clock::now();
 			}
 		}
-		usleep(100);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
 

@@ -22,7 +22,7 @@ SymbolManager::SymbolManager(std::string &address, int port) :
 }
 
 SymbolManager::~SymbolManager() {
-	delete buffer;
+	delete[] buffer;
 }
 
 void SymbolManager::process() {
@@ -57,19 +57,28 @@ void SymbolManager::process() {
 		dataMutex.unlock();
 
 		if (inBufferLength > 0) {
+			bool closeClient = false;
 			try {
 				client.Send(buffer, inBufferLength);
-			} catch (SatHelper::ClientDisconnectedException) {
+			} catch (SatHelper::ClientDisconnectedException &) {
 				std::cout << "Disconnected from decoder.\n";
 				isConnected = false;
-				client.Close();
+				closeClient = true;
 			} catch (SatHelper::SocketException &e) {
 				std::cout << "There was an exception for a client: "
 						<< e.reason() << std::endl;
 				isConnected = false;
-				client.Close();
+				closeClient = true;
 			}
 			inBufferLength = 0;
+
+			if (closeClient) {
+				try {
+					client.Close();
+				} catch (std::exception &e) {
+					std::cerr << "Error closing client: " << e.what() << std::endl;
+				}
+			}
 		}
 	} else {
 		// Clear DataQueue, we don't have any connected client.

@@ -18,7 +18,17 @@ StatisticsDispatcher::StatisticsDispatcher(int port) : port(port) {
 }
 
 StatisticsDispatcher::~StatisticsDispatcher() {
-
+    std::cout << "Disconnecting all statistics clients..." << std::endl;
+    for (SatHelper::TcpSocket &client: clients) {
+        try {
+            client.Close();
+        } catch (SatHelper::SocketException &) {
+            // Do Nothing
+        }
+    }
+    std::cout << "Closing statistics server..." << std::endl;
+    server.Close();
+    std::cout << "Statistics shutdown." << std::endl;
 }
 
 void StatisticsDispatcher::Work() {
@@ -27,7 +37,7 @@ void StatisticsDispatcher::Work() {
     try {
         SatHelper::TcpSocket newClient = server.Accept();
         clients.push_back(newClient);
-    } catch (SatHelper::SocketAcceptException) {
+    } catch (SatHelper::SocketAcceptException &) {
         // No new client.
     }
 
@@ -36,15 +46,15 @@ void StatisticsDispatcher::Work() {
         for (SatHelper::TcpSocket &client: clients) {
             try {
                 client.Send((char *)&statistics.GetData(), sizeof(Statistics_st));
-            } catch (SatHelper::ClientDisconnectedException) {
+            } catch (SatHelper::ClientDisconnectedException &) {
                 std::cout << "One client has been disconnected.\n";
                 toRemove.push_back(client);
                 client.Close();
-            } catch (SatHelper::NotAllDataSentException) {
+            } catch (SatHelper::NotAllDataSentException &) {
                 std::cout << "Not all data sent\n";
                 toRemove.push_back(client);
                 client.Close();
-            } catch (SatHelper::SocketWriteException) {
+            } catch (SatHelper::SocketWriteException &) {
                 std::cout << "Socket Write Exception\n";
                 toRemove.push_back(client);
                 client.Close();

@@ -13,13 +13,20 @@
 #define LOOP_DELAY 1
 
 ChannelDispatcher::ChannelDispatcher(int port) : running(true), port(port) {
-    dataThread = new std::thread(std::bind(&ChannelDispatcher::dataThreadLoop, this));
+    dataThread = new std::thread(&ChannelDispatcher::dataThreadLoop, this);
 }
 
 ChannelDispatcher::~ChannelDispatcher() {
-    running = false;
-    dataThread->join();
     delete dataThread;
+}
+
+void ChannelDispatcher::Stop() {
+    std::cout << "Closing channel dispatcher" << std::endl;
+    running = false;
+    if (dataThread->joinable()) {
+        dataThread->join();
+    }
+    std:: cout << "Finished channel dispatcher" << std::endl;
 }
 
 void ChannelDispatcher::add(char *data, int length) {
@@ -31,7 +38,6 @@ void ChannelDispatcher::add(char *data, int length) {
 void ChannelDispatcher::dataThreadLoop() {
     std::chrono::milliseconds timespan(LOOP_DELAY);
     std::vector<SatHelper::TcpSocket> toRemove;
-
     std::cout << "Starting Channel Dispatcher at port " << port << std::endl;
     server.Listen(port, true);
 
@@ -40,7 +46,7 @@ void ChannelDispatcher::dataThreadLoop() {
         try {
             SatHelper::TcpSocket newClient = server.Accept();
             clients.push_back(newClient);
-        } catch (SatHelper::SocketAcceptException) {
+        } catch (SatHelper::SocketAcceptException &) {
             // No new client.
         }
 
@@ -52,7 +58,7 @@ void ChannelDispatcher::dataThreadLoop() {
                 for (SatHelper::TcpSocket &client : clients) {
                     try {
                         client.Send(packet->data, packet->length);
-                    } catch (SatHelper::ClientDisconnectedException) {
+                    } catch (SatHelper::ClientDisconnectedException &) {
                         std::cout << "One client has been disconnected.\n";
                         toRemove.push_back(client);
                     } catch (SatHelper::SocketException &e) {
@@ -71,7 +77,21 @@ void ChannelDispatcher::dataThreadLoop() {
             clients.erase(std::remove_if(clients.begin(), clients.end(), [&s](SatHelper::TcpSocket &x) {return x.GetSocketFD() == s.GetSocketFD();}),
                     clients.end());
         }
+
         toRemove.clear();
+        if (!running) {
+            break;
+        }
         std::this_thread::sleep_for(timespan);
     }
+
+    std::cout << "Closing Channel Dispatcher Server" << std::endl;
+    for (SatHelper::TcpSocket &client : clients) {
+        try {
+            client.Close();
+        } catch (SatHelper::SocketException &) {
+            // Do Nothing
+        }
+    }
+    server.Close();
 }

@@ -32,6 +32,7 @@ public:
     virtual ~ChannelDispatcher();
 
     void add(char *data, int length);
+    void Stop();
 };
 
 #endif /* CHANNELDISPATCHER_H_ */

@@ -18,6 +18,7 @@
 #include "CFileFrontend.h"
 #include "SymbolManager.h"
 #include "DiagManager.h"
+#include "ExitHandler.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
@@ -65,11 +66,11 @@ void checkAndResizeBuffers(int length) {
 		std::cout << "Allocating Sample Buffer with size " << length
 				<< " (it was " << sampleDataLength << " before)" << std::endl;
 		if (buffer0 != NULL) {
-			delete buffer0;
+			delete[] buffer0;
 		}
 
 		if (buffer1 != NULL) {
-			delete buffer1;
+			delete[] buffer1;
 		}
 
 		buffer0 = new std::complex<float>[length];
@@ -389,6 +390,13 @@ int main(int argc, char **argv) {
 
 	std::thread symbolThread(&symbolLoopFunc);
 
+	ExitHandler::setCallback([](int signal) {
+		std::cout << std::endl << "Got Ctrl + C! Closing..." << std::endl;
+		running = false;
+	});
+
+	ExitHandler::registerSignal();
+
 	while (running) {
 		int siq = symbolManager->symbolsInQueue();
 		if (siq > 0) {
@@ -403,7 +411,7 @@ int main(int argc, char **argv) {
 	std::cout << "Stopping Symbol Processing Thread" << std::endl;
 	symbolThread.join();
 
-	std::cout << "Closing" << std::endl;
+	std::cout << "Closing..." << std::endl;
 
 	delete agc;
 	delete costasLoop;

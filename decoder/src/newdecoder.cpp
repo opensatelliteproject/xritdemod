@@ -15,6 +15,7 @@
 #include "ChannelDispatcher.h"
 #include "StatisticsDispatcher.h"
 #include "parameters.h"
+#include "ExitHandler.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -30,6 +31,8 @@ const uint64_t HRIT_UW0 = 0xfc4ef4fd0cc2df89;
 const uint64_t HRIT_UW2 = 0x25010b02f33d2076;
 const uint64_t LRIT_UW0 = 0xfca2b63db00d9794;
 const uint64_t LRIT_UW2 = 0x035d49c24ff2686b;
+
+bool masterRunning = false;
 
 void setDefaults(SatHelper::ConfigParser &parser) {
     parser[CFG_MODE] = "lrit";
@@ -157,22 +160,34 @@ int main(int argc, char **argv) {
     }
     // Dispatchers
     ChannelDispatcher channelDispatcher(vChannelPort);
+
     StatisticsDispatcher statisticsDispatcher(statisticsPort);
+    ExitHandler::setCallback([](int signal) {
+        std::cout << std::endl << "Got Ctrl + C! Closing..." << std::endl;
+        if (masterRunning) {
+            masterRunning = false;
+        } else {
+            exit(1);
+        }
+    });
+
+    ExitHandler::registerSignal();
 
     // Socket Init
     SatHelper::TcpServer tcpServer;
     cout << "Starting Demod Receiver at port " << demodulatorPort << std::endl;
     tcpServer.Listen(demodulatorPort);
 
+    masterRunning = true;
     // Main Loop
 
-    while (true) {
+    while (masterRunning) {
         cout << "Waiting for a client connection" << endl;
 		SatHelper::TcpSocket client;
 		try {
 	        client = tcpServer.Accept();
 		} catch (SatHelper::SocketAcceptException &e) {
-			std::cerr << "Error acceppting client: " << e.reason() << std::endl;
+			std::cerr << "Error accepting client: " << e.reason() << std::endl;
 			continue;
 		}
 
@@ -182,7 +197,7 @@ int main(int argc, char **argv) {
             SatHelper::ScreenManager::Clear();
         }
 
-        while (true) {
+        while (masterRunning) {
             uint32_t chunkSize = CODEDFRAMESIZE;
             try {
                 checkTime = SatHelper::Tools::getTimestamp();
@@ -378,5 +393,10 @@ int main(int argc, char **argv) {
 
         client.Close();
     }
+
+    channelDispatcher.Stop();
+    std::cout << "Closing main server" << std::endl;
+    tcpServer.Close();
+    std::cout << "Main server closed. " << std::endl;
     return 0;
 }

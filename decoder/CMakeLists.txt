@@ -32,7 +32,6 @@ add_definitions(-DGIT_SHA1=${GIT_SHA1})
 # Flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3")
-set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # Source Code
@@ -41,12 +40,14 @@ file(GLOB SOURCES src/*.cpp)
 add_executable (${PROJECT_NAME} ${SOURCES})
 
 # Links
-target_link_libraries (${PROJECT_NAME} SatHelper)
+target_link_libraries (${PROJECT_NAME} SatHelper.a)
 target_link_libraries (${PROJECT_NAME} pthread)
-target_link_libraries (${PROJECT_NAME} correct)
+target_link_libraries (${PROJECT_NAME} correct.a)
+
 if(WIN32)
   target_link_libraries(${PROJECT_NAME} wsock32 ws2_32)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static")
+  set(CMAKE_EXE_LINKER_FLAGS "-static")
 endif()
 
 # Install library

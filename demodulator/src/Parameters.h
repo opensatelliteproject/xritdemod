@@ -26,7 +26,7 @@
 // Loop Settings
 #define LOOP_ORDER 2
 #define RRC_TAPS 63
-#define PLL_ALPHA 0.0025f
+#define PLL_ALPHA 0.001f
 #define CLOCK_ALPHA 0.0037f
 #define CLOCK_MU 0.5f
 #define CLOCK_OMEGA_LIMIT 0.005f

@@ -24,6 +24,7 @@
     <ClInclude Include="src\ChannelPacket.h" />
     <ClInclude Include="src\ChannelWriter.h" />
     <ClInclude Include="src\Display.h" />
+    <ClInclude Include="src\ExitHandler.h" />
     <ClInclude Include="src\parameters.h" />
     <ClInclude Include="src\Statistics.h" />
     <ClInclude Include="src\StatisticsDispatcher.h" />
@@ -33,6 +34,7 @@
     <ClCompile Include="src\ChannelPacket.cpp" />
     <ClCompile Include="src\ChannelWriter.cpp" />
     <ClCompile Include="src\Display.cpp" />
+    <ClCompile Include="src\ExitHandler.cpp" />
     <ClCompile Include="src\newdecoder.cpp" />
     <ClCompile Include="src\Statistics.cpp" />
     <ClCompile Include="src\StatisticsDispatcher.cpp" />

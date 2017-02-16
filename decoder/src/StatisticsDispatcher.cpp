@@ -13,13 +13,21 @@
 #define LOOP_DELAY 100
 
 StatisticsDispatcher::StatisticsDispatcher(int port) : port(port) {
+
+}
+
+void StatisticsDispatcher::Start() {
     std::cout << "Starting Statistics Dispatcher at port " << port << std::endl;
     server.Listen(port, true);
 }
 
 StatisticsDispatcher::~StatisticsDispatcher() {
+
+}
+
+void StatisticsDispatcher::Stop() {
     std::cout << "Disconnecting all statistics clients..." << std::endl;
-    for (SatHelper::TcpSocket &client: clients) {
+    for (SatHelper::TcpSocket &client : clients) {
         try {
             client.Close();
         } catch (SatHelper::SocketException &) {

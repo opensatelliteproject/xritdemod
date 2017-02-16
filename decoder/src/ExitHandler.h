@@ -21,7 +21,11 @@
 class ExitHandler {
 private:
 	static std::function<void(int type)> callback;
+#ifdef _WIN32
+	static BOOL WINAPI ExitHandler::handler(DWORD sig);
+#else
 	static void handler(int sig);
+#endif
 public:
 	static void setCallback(std::function<void(int type)> cb);
 	static void registerSignal();

@@ -6,20 +6,27 @@
  */
 
 #include "ExitHandler.h"
+#include <iostream>
 
 std::function<void(int type)> ExitHandler::callback = NULL;
-
-void ExitHandler::handler(int sig) {
 #ifdef _WIN32
-	if (sig == CTRL_C_EVENT)
-#endif
+BOOL WINAPI ExitHandler::handler(DWORD sig) {
+    if (sig == CTRL_C_EVENT || sig == CTRL_CLOSE_EVENT) {
+        if (ExitHandler::callback != NULL) {
+	        ExitHandler::callback(sig);
+        }
+        return true;
+    }
+
+    return false;
+}
+#else
+void ExitHandler::handler(int sig) {
 	if (ExitHandler::callback != NULL) {
 		ExitHandler::callback(sig);
 	}
-#ifdef _WIN32
 }
 #endif
-}
 
 void ExitHandler::setCallback(std::function<void(int type)> cb) {
 	ExitHandler::callback = cb;

@@ -158,10 +158,27 @@ int main(int argc, char **argv) {
         correlator.addWord(HRIT_UW0);
         correlator.addWord(HRIT_UW2);
     }
+
+    masterRunning = true;
+
     // Dispatchers
     ChannelDispatcher channelDispatcher(vChannelPort);
-
     StatisticsDispatcher statisticsDispatcher(statisticsPort);
+
+    try {
+	    channelDispatcher.Start();
+    } catch (SatHelperException &e) {
+	    std::cerr << "Cannot start channel dispatcher at port " << vChannelPort << ": " << e.reason() << std::endl;
+	    masterRunning = false;
+    }
+
+    try {
+	    statisticsDispatcher.Start();
+    } catch (SatHelperException &e) {
+	    std::cerr << "Cannot start statistics dispatcher at port " << statisticsPort << ": " << e.reason() << std::endl;
+	    masterRunning = false;
+    }
+
     ExitHandler::setCallback([](int signal) {
         std::cout << std::endl << "Got Ctrl + C! Closing..." << std::endl;
         if (masterRunning) {
@@ -176,9 +193,13 @@ int main(int argc, char **argv) {
     // Socket Init
     SatHelper::TcpServer tcpServer;
     cout << "Starting Demod Receiver at port " << demodulatorPort << std::endl;
-    tcpServer.Listen(demodulatorPort);
+    try {
+	    tcpServer.Listen(demodulatorPort);
+    } catch (SatHelperException &e) {
+	    std::cerr << "Cannot listen to port " << demodulatorPort << ": " << e.reason() << std::endl;
+	    masterRunning = false;
+    }
 
-    masterRunning = true;
     // Main Loop
 
     while (masterRunning) {
@@ -394,6 +415,7 @@ int main(int argc, char **argv) {
         client.Close();
     }
 
+	statisticsDispatcher.Stop();
     channelDispatcher.Stop();
     std::cout << "Closing main server" << std::endl;
     tcpServer.Close();

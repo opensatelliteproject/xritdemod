@@ -18,8 +18,6 @@ class StatisticsDispatcher {
 private:
     Statistics statistics;
     std::vector<SatHelper::TcpSocket> clients;
-
-    void dataThreadLoop();
     SatHelper::TcpServer server;
     int port;
 
@@ -31,6 +29,8 @@ public:
         this->statistics.update(statistics);
     }
 
+    void Start();
+    void Stop();
     void Work();
 };
 

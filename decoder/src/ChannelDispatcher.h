@@ -32,6 +32,7 @@ public:
     virtual ~ChannelDispatcher();
 
     void add(char *data, int length);
+    void Start();
     void Stop();
 };
 

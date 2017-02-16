@@ -13,17 +13,23 @@
 #define LOOP_DELAY 1
 
 ChannelDispatcher::ChannelDispatcher(int port) : running(true), port(port) {
-    dataThread = new std::thread(&ChannelDispatcher::dataThreadLoop, this);
+
 }
 
 ChannelDispatcher::~ChannelDispatcher() {
     delete dataThread;
 }
 
+void ChannelDispatcher::Start() {
+	std::cout << "Starting Channel Dispatcher at port " << port << std::endl;
+	server.Listen(port, true);
+	dataThread = new std::thread(&ChannelDispatcher::dataThreadLoop, this);
+}
+
 void ChannelDispatcher::Stop() {
     std::cout << "Closing channel dispatcher" << std::endl;
     running = false;
-    if (dataThread->joinable()) {
+    if (dataThread != NULL && dataThread->joinable()) {
         dataThread->join();
     }
     std:: cout << "Finished channel dispatcher" << std::endl;
@@ -38,8 +44,6 @@ void ChannelDispatcher::add(char *data, int length) {
 void ChannelDispatcher::dataThreadLoop() {
     std::chrono::milliseconds timespan(LOOP_DELAY);
     std::vector<SatHelper::TcpSocket> toRemove;
-    std::cout << "Starting Channel Dispatcher at port " << port << std::endl;
-    server.Listen(port, true);
 
     while (running) {
         // Check for new clients

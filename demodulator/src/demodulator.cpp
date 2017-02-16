@@ -302,8 +302,12 @@ int main(int argc, char **argv) {
 	if (parser.hasKey(CFG_DEVICE_TYPE)) {
 		if (parser[CFG_DEVICE_TYPE] == "airspy") {
 			AirspyDevice::Initialize();
-			device = new AirspyDevice();
-
+			try {
+				device = new AirspyDevice();
+			} catch (SatHelperException &e) {
+				std::cerr << "Failed to open Airspy Device: " << e.reason() << std::endl;
+				exit(1);
+			}
 			bool isMini = false;
 			bool sampleRateSet = false;
 

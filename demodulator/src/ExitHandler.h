@@ -1,9 +1,9 @@
 /*
- * ExitHandler.h
- *
- *  Created on: 15/02/2017
- *      Author: Lucas Teske
- */
+* ExitHandler.h
+*
+*  Created on: 15/02/2017
+*      Author: Lucas Teske
+*/
 
 #ifndef SRC_EXITHANDLER_H_
 #define SRC_EXITHANDLER_H_
@@ -20,8 +20,12 @@
 
 class ExitHandler {
 private:
-	static std::function<void(int type)> callback;
-	static void handler(int sig);
+    static std::function<void(int type)> callback;
+#ifdef _WIN32
+    static BOOL WINAPI ExitHandler::handler(DWORD sig);
+#else
+    static void handler(int sig);
+#endif
 public:
 	static void setCallback(std::function<void(int type)> cb);
 	static void registerSignal();

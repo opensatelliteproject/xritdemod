@@ -166,6 +166,7 @@
     <ClInclude Include="src\AirspyDevice.h" />
     <ClInclude Include="src\CFileFrontend.h" />
     <ClInclude Include="src\DiagManager.h" />
+    <ClInclude Include="src\ExitHandler.h" />
     <ClInclude Include="src\FrontendDevice.h" />
     <ClInclude Include="src\Parameters.h" />
     <ClInclude Include="src\SymbolManager.h" />
@@ -175,6 +176,7 @@
     <ClCompile Include="src\CFileFrontend.cpp" />
     <ClCompile Include="src\demodulator.cpp" />
     <ClCompile Include="src\DiagManager.cpp" />
+    <ClCompile Include="src\ExitHandler.cpp" />
     <ClCompile Include="src\SymbolManager.cpp" />
   </ItemGroup>
   <ItemGroup>

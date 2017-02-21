@@ -308,13 +308,11 @@ int main(int argc, char **argv) {
 				std::cerr << "Failed to open Airspy Device: " << e.reason() << std::endl;
 				exit(1);
 			}
-			bool isMini = false;
 			bool sampleRateSet = false;
 
 			std::vector<uint32_t> sampleRates = device->GetAvailableSampleRates();
 			for (uint32_t asSR : sampleRates) {
 				if (asSR == sampleRate) {
-					isMini = true;
 					device->SetSampleRate(sampleRate);
 					sampleRateSet = true;
 					break;
@@ -326,9 +324,7 @@ int main(int argc, char **argv) {
 				return 1;
 			}
 
-			std::cout << "Airspy " << (isMini ? "Mini " : "R2 ")
-					<< "detected. Sample rate set to " << device->GetSampleRate()
-					<< std::endl;
+			std::cout << "Airspy sample rate set to " << device->GetSampleRate() << std::endl;
 
 		} else if (parser[CFG_DEVICE_TYPE] == "cfile") {
 			if (!parser.hasKey(CFG_FILENAME)) {

@@ -98,6 +98,12 @@ void SymbolManager::add(float *data, int length) {
 
 void SymbolManager::add(std::complex<float> *data, int length) {
 	dataMutex.lock();
+
+    if (dataQueue.size() >= SM_MAX_SYMBOL_BUFFER) {
+        std::cerr << "SymbolManager Buffer is full!!! Dropping samples." << std::endl;
+        return;
+    }
+
 	for (int i = 0; i < length; i++) {
 		dataQueue.push(data[i].imag()); // M&M Outputs the data in imaginary
 	}

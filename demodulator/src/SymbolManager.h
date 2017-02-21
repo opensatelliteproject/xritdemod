@@ -18,7 +18,8 @@
 namespace OpenSatelliteProject {
 
 // Number of symbols
-#define SM_SOCKET_BUFFER_SIZE 1024
+#define SM_SOCKET_BUFFER_SIZE 16384
+#define SM_MAX_SYMBOL_BUFFER (1024 * 1024)
 
 class SymbolManager {
 private:

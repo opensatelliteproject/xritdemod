@@ -101,7 +101,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=1;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=2;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -116,7 +116,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=1;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=2;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -133,7 +133,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=1;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=2;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,7 +151,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=1;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=2;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

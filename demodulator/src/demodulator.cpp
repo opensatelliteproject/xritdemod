@@ -15,6 +15,7 @@
 #include <SatHelper/sathelper.h>
 #include "FrontendDevice.h"
 #include "AirspyDevice.h"
+#include "RtlFrontend.h"
 #include "CFileFrontend.h"
 #include "SymbolManager.h"
 #include "DiagManager.h"
@@ -197,6 +198,7 @@ int main(int argc, char **argv) {
 	float pllAlpha = (float)CLOCK_ALPHA;
 	std::string decoderAddress(DEFAULT_DECODER_ADDRESS);
 	int decoderPort = DEFAULT_DECODER_PORT;
+	int deviceNumber = DEFAULT_DEVICE_NUMBER;
 
 	std::cout << "xRIT Demodulator - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
 	std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
@@ -270,6 +272,10 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	if (parser.hasKey(CFG_DEVICE_NUM)) {
+		deviceNumber = parser.getInt(CFG_DEVICE_NUM);
+	}
+
 	if (parser.hasKey(CFG_DECODER_ADDRESS)) {
 		decoderAddress = parser.get(CFG_DECODER_ADDRESS);
 	}
@@ -332,11 +338,15 @@ int main(int argc, char **argv) {
 				return 1;
 			}
 			device = new CFileFrontend(parser[CFG_FILENAME]);
-			device->SetCenterFrequency(parser.getUInt(CFG_FREQUENCY));
-			device->SetSampleRate(parser.getUInt(CFG_SAMPLE_RATE));
+			device->SetCenterFrequency(centerFrequency);
+			device->SetSampleRate(sampleRate);
 		} else if (parser[CFG_DEVICE_TYPE] == "wav") {
 			std::cerr << "WAV Reader not implemented." << std::endl;
 			return 1;
+		} else if (parser[CFG_DEVICE_TYPE] == "rtlsdr") {
+			device = new RtlFrontend(deviceNumber);
+			device->SetSampleRate(sampleRate);
+			device->SetCenterFrequency(centerFrequency);
 		}
 	} else {
 		std::cerr << "Input Device Type not specified in config file." << std::endl;
@@ -369,9 +379,9 @@ int main(int argc, char **argv) {
 	std::cout << "Center Frequency: " << (centerFrequency / 1000000.0) << " MHz" << std::endl;
 	std::cout << "Automatic Gain Control: " << (agcEnable ? "Enabled" : "Disabled") << std::endl;
 	if (!agcEnable) {
-		std::cout << "	LNA Gain: " << lnaGain << std::endl;
-		std::cout << "	VGA Gain: " << vgaGain << std::endl;
-		std::cout << "	MIX Gain: " << mixerGain << std::endl;
+		std::cout << "	LNA Gain: " << (int)lnaGain << std::endl;
+		std::cout << "	VGA Gain: " << (int)vgaGain << std::endl;
+		std::cout << "	MIX Gain: " << (int)mixerGain << std::endl;
 	}
 
 	device->SetCenterFrequency(centerFrequency);

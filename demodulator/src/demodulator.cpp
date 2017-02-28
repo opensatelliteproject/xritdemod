@@ -20,19 +20,20 @@
 #include "SymbolManager.h"
 #include "DiagManager.h"
 #include "ExitHandler.h"
+#include "SDRPlayFrontend.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
 
 #include "Parameters.h"
 
-FrontendDevice *device;
-AGC *agc;
-CostasLoop *costasLoop;
-ClockRecovery *clockRecovery;
-FirFilter *rrcFilter;
-FirFilter *decimator;
-SymbolManager *symbolManager;
+FrontendDevice *device = NULL;
+AGC *agc = NULL;
+CostasLoop *costasLoop = NULL;
+ClockRecovery *clockRecovery = NULL;
+FirFilter *rrcFilter = NULL;
+FirFilter *decimator = NULL;
+SymbolManager *symbolManager = NULL;
 CircularBuffer<float> samplesFifo(FIFO_SIZE);
 DiagManager *diagManager = NULL;
 
@@ -200,235 +201,276 @@ int main(int argc, char **argv) {
 	int decoderPort = DEFAULT_DECODER_PORT;
 	int deviceNumber = DEFAULT_DEVICE_NUMBER;
 
-	std::cout << "xRIT Demodulator - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
-	std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
-	std::cout << "  SatHelper Version: " << SatHelper::Info::GetVersion() << " - " << SatHelper::Info::GetGitSHA1() << std::endl;
-	std::cout << "  SatHelper Compilation Date/Time: " << SatHelper::Info::GetCompilationDate() << " - " << SatHelper::Info::GetCompilationTime() << std::endl;
-	std::cout << std::endl;
+	try {
 
-	if (!parser.LoadFile()) {
-		// Add defaults to LRIT
-		std::cout << "No config file found. Defaulting to LRIT and creating config file." << std::endl;
-		std::cout << "The config file will be created with both \"mode\" and specific parameters. " << std::endl;
-		std::cout << "But if mode is specified, the other arguments will be ignore. The created file is just an example." << std::endl;
-		setDefaults(parser);
-	}
+		std::cout << "xRIT Demodulator - v" << QUOTE(MAJOR_VERSION) << "." << QUOTE(MINOR_VERSION) << "." << QUOTE(MAINT_VERSION) << " -- " << QUOTE(GIT_SHA1) << std::endl;
+	#ifdef NON_FREE
+		std::cout << "  Compiled with NON FREE support." << std::endl;
+	#endif
+		std::cout << "  Compilation Date/Time: " << __DATE__ << " - " << __TIME__ << std::endl;
+		std::cout << "  SatHelper Version: " << SatHelper::Info::GetVersion() << " - " << SatHelper::Info::GetGitSHA1() << std::endl;
+		std::cout << "  SatHelper Compilation Date/Time: " << SatHelper::Info::GetCompilationDate() << " - " << SatHelper::Info::GetCompilationTime() << std::endl;
+		std::cout << std::endl;
 
-	if (parser.hasKey(CFG_MODE)) {
-		if (parser[CFG_MODE] == "lrit") {
-			std::cout << "Selected LRIT mode. Ignoring parameters from config file." << std::endl;
-			setLRITMode(parser, false);
-		} else if (parser[CFG_MODE] == "hrit") {
-			std::cout << "Selected HRIT mode. Ignoring parameters from config file." << std::endl;
-			setHRITMode(parser, false);
+		if (!parser.LoadFile()) {
+			// Add defaults to LRIT
+			std::cout << "No config file found. Defaulting to LRIT and creating config file." << std::endl;
+			std::cout << "The config file will be created with both \"mode\" and specific parameters. " << std::endl;
+			std::cout << "But if mode is specified, the other arguments will be ignore. The created file is just an example." << std::endl;
+			setDefaults(parser);
+		}
+
+		if (parser.hasKey(CFG_MODE)) {
+			if (parser[CFG_MODE] == "lrit") {
+				std::cout << "Selected LRIT mode. Ignoring parameters from config file." << std::endl;
+				setLRITMode(parser, false);
+			} else if (parser[CFG_MODE] == "hrit") {
+				std::cout << "Selected HRIT mode. Ignoring parameters from config file." << std::endl;
+				setHRITMode(parser, false);
+			} else {
+				std::cerr << "Invalid mode specified: " << parser[CFG_MODE] << std::endl;
+				return 1;
+			}
+		}
+
+		if (parser.hasKey(CFG_PLL_ALPHA)) {
+			std::cout << "Warning: PLL Alpha is not the default one. Use with care." << std::endl;
+			pllAlpha = parser.getFloat(CFG_PLL_ALPHA);
+		}
+
+		if (parser.hasKey(CFG_CONSTELLATION)) {
+			constellationEnable = parser.getBool(CFG_CONSTELLATION);
+		}
+
+		if (parser.hasKey(CFG_SYMBOL_RATE)) {
+			symbolRate = parser.getUInt(CFG_SYMBOL_RATE);
 		} else {
-			std::cerr << "Invalid mode specified: " << parser[CFG_MODE] << std::endl;
+			std::cerr << "Field \"symbolRate\" is missing on config file." << std::endl;
 			return 1;
 		}
-	}
 
-	if (parser.hasKey(CFG_PLL_ALPHA)) {
-		std::cout << "Warning: PLL Alpha is not the default one. Use with care." << std::endl;
-		pllAlpha = parser.getFloat(CFG_PLL_ALPHA);
-	}
-
-	if (parser.hasKey(CFG_CONSTELLATION)) {
-		constellationEnable = parser.getBool(CFG_CONSTELLATION);
-	}
-
-	if (parser.hasKey(CFG_SYMBOL_RATE)) {
-		symbolRate = parser.getUInt(CFG_SYMBOL_RATE);
-	} else {
-		std::cerr << "Field \"symbolRate\" is missing on config file." << std::endl;
-		return 1;
-	}
-
-	if (parser.hasKey(CFG_RRC_ALPHA)) {
-		rrcAlpha = parser.getFloat(CFG_RRC_ALPHA);
-	} else {
-		std::cerr << "Field \"rrcAlpha\" is missing on config file." << std::endl;
-		return 1;
-	}
-
-	if (parser.hasKey(CFG_FREQUENCY)) {
-		centerFrequency = parser.getUInt(CFG_FREQUENCY);
-	} else {
-		std::cerr << "Field \"frequency\" is missing on config file." << std::endl;
-		return 1;
-	}
-
-	if (parser.hasKey(CFG_SAMPLE_RATE)) {
-		sampleRate = parser.getUInt(CFG_SAMPLE_RATE);
-		std::cout << "Sample Rate: " << sampleRate << std::endl;
-	} else {
-		std::cerr << "Field \"sampleRate\" is missing on config file." << std::endl;
-		return 1;
-	}
-
-	if (parser.hasKey(CFG_DECIMATION)) {
-		baseDecimation = parser.getInt(CFG_DECIMATION);
-	} else {
-		std::cerr << "Field \"decimation\" is missing on config file." << std::endl;
-		return 1;
-	}
-
-	if (parser.hasKey(CFG_DEVICE_NUM)) {
-		deviceNumber = parser.getInt(CFG_DEVICE_NUM);
-	}
-
-	if (parser.hasKey(CFG_DECODER_ADDRESS)) {
-		decoderAddress = parser.get(CFG_DECODER_ADDRESS);
-	}
-
-	if (parser.hasKey(CFG_DECODER_PORT)) {
-		decoderPort = parser.getInt(CFG_DECODER_PORT);
-	}
-
-	if (parser.hasKey(CFG_LNA_GAIN)) {
-		lnaGain = parser.getInt(CFG_LNA_GAIN);
-	}
-
-	if (parser.hasKey(CFG_MIXER_GAIN)) {
-		mixerGain = parser.getInt(CFG_MIXER_GAIN);
-	}
-
-	if (parser.hasKey(CFG_VGA_GAIN)) {
-		vgaGain = parser.getInt(CFG_VGA_GAIN);
-	}
-
-	if (parser.hasKey(CFG_AGC)) {
-		agcEnable = parser.getBool(CFG_AGC);
-		if (agcEnable) {
-			lnaGain = 15;
-			vgaGain = 15;
-			mixerGain = 15;
+		if (parser.hasKey(CFG_RRC_ALPHA)) {
+			rrcAlpha = parser.getFloat(CFG_RRC_ALPHA);
+		} else {
+			std::cerr << "Field \"rrcAlpha\" is missing on config file." << std::endl;
+			return 1;
 		}
-	}
 
-	if (parser.hasKey(CFG_DEVICE_TYPE)) {
-		if (parser[CFG_DEVICE_TYPE] == "airspy") {
-			AirspyDevice::Initialize();
-			try {
-				device = new AirspyDevice();
-			} catch (SatHelperException &e) {
-				std::cerr << "Failed to open Airspy Device: " << e.reason() << std::endl;
-				exit(1);
+		if (parser.hasKey(CFG_FREQUENCY)) {
+			centerFrequency = parser.getUInt(CFG_FREQUENCY);
+		} else {
+			std::cerr << "Field \"frequency\" is missing on config file." << std::endl;
+			return 1;
+		}
+
+		if (parser.hasKey(CFG_SAMPLE_RATE)) {
+			sampleRate = parser.getUInt(CFG_SAMPLE_RATE);
+			std::cout << "Sample Rate: " << sampleRate << std::endl;
+		} else {
+			std::cerr << "Field \"sampleRate\" is missing on config file." << std::endl;
+			return 1;
+		}
+
+		if (parser.hasKey(CFG_DECIMATION)) {
+			baseDecimation = parser.getInt(CFG_DECIMATION);
+		} else {
+			std::cerr << "Field \"decimation\" is missing on config file." << std::endl;
+			return 1;
+		}
+
+		if (parser.hasKey(CFG_DEVICE_NUM)) {
+			deviceNumber = parser.getInt(CFG_DEVICE_NUM);
+		}
+
+		if (parser.hasKey(CFG_DECODER_ADDRESS)) {
+			decoderAddress = parser.get(CFG_DECODER_ADDRESS);
+		}
+
+		if (parser.hasKey(CFG_DECODER_PORT)) {
+			decoderPort = parser.getInt(CFG_DECODER_PORT);
+		}
+
+		if (parser.hasKey(CFG_LNA_GAIN)) {
+			lnaGain = parser.getInt(CFG_LNA_GAIN);
+		}
+
+		if (parser.hasKey(CFG_MIXER_GAIN)) {
+			mixerGain = parser.getInt(CFG_MIXER_GAIN);
+		}
+
+		if (parser.hasKey(CFG_VGA_GAIN)) {
+			vgaGain = parser.getInt(CFG_VGA_GAIN);
+		}
+
+		if (parser.hasKey(CFG_AGC)) {
+			agcEnable = parser.getBool(CFG_AGC);
+			if (agcEnable) {
+				lnaGain = 15;
+				vgaGain = 15;
+				mixerGain = 15;
 			}
-			bool sampleRateSet = false;
+		}
 
-			std::vector<uint32_t> sampleRates = device->GetAvailableSampleRates();
-			for (uint32_t asSR : sampleRates) {
-				if (asSR == sampleRate) {
-					device->SetSampleRate(sampleRate);
-					sampleRateSet = true;
-					break;
+		if (parser.hasKey(CFG_DEVICE_TYPE)) {
+			if (parser[CFG_DEVICE_TYPE] == "airspy") {
+				AirspyDevice::Initialize();
+				try {
+					device = new AirspyDevice();
+				} catch (SatHelperException &e) {
+					std::cerr << "Failed to open Airspy Device: " << e.reason() << std::endl;
+					exit(1);
 				}
-			}
+				bool sampleRateSet = false;
 
-			if (!sampleRateSet) {
-				std::cerr << "Your device is not compatible with sampleRate \"" << sampleRate << "\"" << std::endl;
+				std::vector<uint32_t> sampleRates = device->GetAvailableSampleRates();
+				for (uint32_t asSR : sampleRates) {
+					if (asSR == sampleRate) {
+						device->SetSampleRate(sampleRate);
+						sampleRateSet = true;
+						break;
+					}
+				}
+
+				if (!sampleRateSet) {
+					std::cerr << "Your device is not compatible with sampleRate \"" << sampleRate << "\"" << std::endl;
+					return 1;
+				}
+
+				std::cout << "Airspy sample rate set to " << device->GetSampleRate() << std::endl;
+
+			} else if (parser[CFG_DEVICE_TYPE] == "cfile") {
+				if (!parser.hasKey(CFG_FILENAME)) {
+					std::cerr << "Device Type defined as \"cfile\" but no \"filename\" specified." << std::endl;
+					return 1;
+				}
+				device = new CFileFrontend(parser[CFG_FILENAME]);
+				device->SetCenterFrequency(centerFrequency);
+				device->SetSampleRate(sampleRate);
+			} else if (parser[CFG_DEVICE_TYPE] == "wav") {
+				std::cerr << "WAV Reader not implemented." << std::endl;
 				return 1;
+			} else if (parser[CFG_DEVICE_TYPE] == "rtlsdr") {
+				device = new RtlFrontend(deviceNumber);
+				device->SetSampleRate(sampleRate);
+				device->SetCenterFrequency(centerFrequency);
+	#ifdef NON_FREE
+			} else if (parser[CFG_DEVICE_TYPE] == "sdrplay") {
+				SDRPlayFrontend::Initialize();
+				device = new SDRPlayFrontend();
+				device->SetSampleRate(sampleRate);
+				device->SetCenterFrequency(centerFrequency);
 			}
-
-			std::cout << "Airspy sample rate set to " << device->GetSampleRate() << std::endl;
-
-		} else if (parser[CFG_DEVICE_TYPE] == "cfile") {
-			if (!parser.hasKey(CFG_FILENAME)) {
-				std::cerr << "Device Type defined as \"cfile\" but no \"filename\" specified." << std::endl;
-				return 1;
+	#else
 			}
-			device = new CFileFrontend(parser[CFG_FILENAME]);
-			device->SetCenterFrequency(centerFrequency);
-			device->SetSampleRate(sampleRate);
-		} else if (parser[CFG_DEVICE_TYPE] == "wav") {
-			std::cerr << "WAV Reader not implemented." << std::endl;
+	#endif
+		} else {
+			std::cerr << "Input Device Type not specified in config file." << std::endl;
 			return 1;
-		} else if (parser[CFG_DEVICE_TYPE] == "rtlsdr") {
-			device = new RtlFrontend(deviceNumber);
-			device->SetSampleRate(sampleRate);
-			device->SetCenterFrequency(centerFrequency);
 		}
-	} else {
-		std::cerr << "Input Device Type not specified in config file." << std::endl;
-		return 1;
-	}
 
-	if (constellationEnable) {
-		diagManager = new DiagManager(0.01f);
-	}
-
-	device->SetSamplesAvailableCallback(onSamplesAvailable);
-
-	float circuitSampleRate = device->GetSampleRate() / ((float) baseDecimation);
-	float sps = circuitSampleRate / ((float) symbolRate);
-
-	std::cout << "Samples per Symbol: " << sps << std::endl;
-	std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
-	std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate / 2 << std::endl;
-
-	std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, symbolRate, rrcAlpha, RRC_TAPS);
-	std::vector<float> decimatorTaps = Filters::lowPass(1, device->GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
-
-	decimator = new FirFilter(baseDecimation, decimatorTaps);
-	agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
-	costasLoop = new CostasLoop(pllAlpha, LOOP_ORDER);
-	clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU, CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
-	rrcFilter = new FirFilter(1, rrcTaps);
-	symbolManager = new SymbolManager(decoderAddress, decoderPort);
-
-	std::cout << "Center Frequency: " << (centerFrequency / 1000000.0) << " MHz" << std::endl;
-	std::cout << "Automatic Gain Control: " << (agcEnable ? "Enabled" : "Disabled") << std::endl;
-	if (!agcEnable) {
-		std::cout << "	LNA Gain: " << (int)lnaGain << std::endl;
-		std::cout << "	VGA Gain: " << (int)vgaGain << std::endl;
-		std::cout << "	MIX Gain: " << (int)mixerGain << std::endl;
-	}
-
-	device->SetCenterFrequency(centerFrequency);
-	if (agcEnable) {
-		device->SetAGC(true);
-	} else {
-		device->SetAGC(false);
-		device->SetMixerGain(lnaGain);
-		device->SetLNAGain(vgaGain);
-		device->SetVGAGain(mixerGain);
-	}
-
-	std::cout << "Starting " << device->GetName() << std::endl;
-	device->Start();
-	running = true;
-
-	std::thread symbolThread(&symbolLoopFunc);
-
-	ExitHandler::setCallback([](int signal) {
-		std::cout << std::endl << "Got Ctrl + C! Closing..." << std::endl;
-		running = false;
-	});
-
-	ExitHandler::registerSignal();
-
-	while (running) {
-		int siq = symbolManager->symbolsInQueue();
-		if (siq > 0) {
-			symbolManager->process();
+		if (constellationEnable) {
+			diagManager = new DiagManager(0.01f);
 		}
-		std::this_thread::sleep_for(std::chrono::microseconds(10)); // Let's not waste CPU time
+
+		device->SetSamplesAvailableCallback(onSamplesAvailable);
+
+		float circuitSampleRate = device->GetSampleRate() / ((float) baseDecimation);
+		float sps = circuitSampleRate / ((float) symbolRate);
+
+		std::cout << "Samples per Symbol: " << sps << std::endl;
+		std::cout << "Circuit Sample Rate: " << circuitSampleRate << std::endl;
+		std::cout << "Low Pass Decimator Cut Frequency: " << circuitSampleRate / 2 << std::endl;
+
+		std::vector<float> rrcTaps = Filters::RRC(1, circuitSampleRate, symbolRate, rrcAlpha, RRC_TAPS);
+		std::vector<float> decimatorTaps = Filters::lowPass(1, device->GetSampleRate(), circuitSampleRate / 2, 100e3, FFTWindows::WindowType::HAMMING, 6.76);
+
+		decimator = new FirFilter(baseDecimation, decimatorTaps);
+		agc = new AGC(AGC_RATE, AGC_REFERENCE, AGC_GAIN, AGC_MAX_GAIN);
+		costasLoop = new CostasLoop(pllAlpha, LOOP_ORDER);
+		clockRecovery = new ClockRecovery(sps, CLOCK_GAIN_OMEGA, CLOCK_MU, CLOCK_ALPHA, CLOCK_OMEGA_LIMIT);
+		rrcFilter = new FirFilter(1, rrcTaps);
+		symbolManager = new SymbolManager(decoderAddress, decoderPort);
+
+		std::cout << "Center Frequency: " << (centerFrequency / 1000000.0) << " MHz" << std::endl;
+		std::cout << "Automatic Gain Control: " << (agcEnable ? "Enabled" : "Disabled") << std::endl;
+		if (!agcEnable) {
+			std::cout << "	LNA Gain: " << (int)lnaGain << std::endl;
+			std::cout << "	VGA Gain: " << (int)vgaGain << std::endl;
+			std::cout << "	MIX Gain: " << (int)mixerGain << std::endl;
+		}
+
+		device->SetCenterFrequency(centerFrequency);
+		if (agcEnable) {
+			device->SetAGC(true);
+		} else {
+			device->SetAGC(false);
+			device->SetMixerGain(lnaGain);
+			device->SetLNAGain(vgaGain);
+			device->SetVGAGain(mixerGain);
+		}
+
+		std::cout << "Starting " << device->GetName() << std::endl;
+		device->Start();
+		running = true;
+
+		std::thread symbolThread(&symbolLoopFunc);
+
+		ExitHandler::setCallback([](int signal) {
+			std::cout << std::endl << "Got Ctrl + C! Closing..." << std::endl;
+			running = false;
+		});
+
+		ExitHandler::registerSignal();
+
+		while (running) {
+			int siq = symbolManager->symbolsInQueue();
+			if (siq > 0) {
+				symbolManager->process();
+			}
+			std::this_thread::sleep_for(std::chrono::microseconds(10)); // Let's not waste CPU time
+		}
+
+		std::cout << "Stopping " << device->GetName() << std::endl;
+		device->Stop();
+
+		std::cout << "Stopping Symbol Processing Thread" << std::endl;
+		symbolThread.join();
+
+		std::cout << "Closing..." << std::endl;
+	} catch (SatHelperException &e) {
+		std::cerr << "Unhandled exception: " << e.reason() << std::endl;
 	}
 
-	std::cout << "Stopping Airspy" << std::endl;
-	device->Stop();
-
-	std::cout << "Stopping Symbol Processing Thread" << std::endl;
-	symbolThread.join();
-
-	std::cout << "Closing..." << std::endl;
-
-	delete agc;
-	delete costasLoop;
-	delete clockRecovery;
-	delete rrcFilter;
-	delete device;
-	delete symbolManager;
+	if (agc != NULL) {
+		delete agc;
+	}
+	if (costasLoop != NULL) {
+		delete costasLoop;
+	}
+	if (clockRecovery != NULL) {
+		delete clockRecovery;
+	}
+	if (rrcFilter != NULL) {
+		delete rrcFilter;
+	}
+	if (device != NULL) {
+		delete device;
+	}
+	if (symbolManager != NULL) {
+		delete symbolManager;
+	}
+	if (decimator != NULL) {
+		delete decimator;
+	}
+	if (diagManager != NULL) {
+		delete diagManager;
+	}
+	if (buffer0 != NULL) {
+		delete[] buffer0;
+	}
+	if (buffer1 != NULL) {
+		delete[] buffer1;
+	}
 
 	return 0;
 }

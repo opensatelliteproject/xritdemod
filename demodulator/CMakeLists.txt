@@ -33,6 +33,11 @@ add_definitions(-DGIT_SHA1=${GIT_SHA1})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3")
 
+if (DEBUG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+endif()
+
 # Source Code
 file(GLOB SOURCES src/*.cpp)
 
@@ -54,6 +59,11 @@ else()
   target_link_libraries (${PROJECT_NAME} usb-1.0)
   target_link_libraries (${PROJECT_NAME} pthread)
   target_link_libraries (${PROJECT_NAME} rtlsdr)
+  if(NON_FREE)
+  	message(STATUS "Enabling NON-FREE mode")
+  	add_definitions(-DNON_FREE)
+    target_link_libraries (${PROJECT_NAME} mirsdrapi-rsp)
+  endif()
 endif()
 
 

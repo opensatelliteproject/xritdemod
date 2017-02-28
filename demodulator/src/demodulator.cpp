@@ -21,6 +21,7 @@
 #include "DiagManager.h"
 #include "ExitHandler.h"
 #include "SDRPlayFrontend.h"
+#include "HackRFFrontend.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
@@ -313,6 +314,7 @@ int main(int argc, char **argv) {
 
 		if (parser.hasKey(CFG_DEVICE_TYPE)) {
 			if (parser[CFG_DEVICE_TYPE] == "airspy") {
+				std::cout << "Airspy Frontend selected." << std::endl;
 				AirspyDevice::Initialize();
 				try {
 					device = new AirspyDevice();
@@ -343,6 +345,7 @@ int main(int argc, char **argv) {
 					std::cerr << "Device Type defined as \"cfile\" but no \"filename\" specified." << std::endl;
 					return 1;
 				}
+				std::cout << "CFile Frontend selected. File Name: " << parser[CFG_FILENAME] << std::endl;
 				device = new CFileFrontend(parser[CFG_FILENAME]);
 				device->SetCenterFrequency(centerFrequency);
 				device->SetSampleRate(sampleRate);
@@ -350,11 +353,19 @@ int main(int argc, char **argv) {
 				std::cerr << "WAV Reader not implemented." << std::endl;
 				return 1;
 			} else if (parser[CFG_DEVICE_TYPE] == "rtlsdr") {
+				std::cout << "RTLSDR Frontend selected. Device Number: " << deviceNumber << std::endl;
 				device = new RtlFrontend(deviceNumber);
+				device->SetSampleRate(sampleRate);
+				device->SetCenterFrequency(centerFrequency);
+			} else if (parser[CFG_DEVICE_TYPE] == "hackrf") {
+				std::cout << "HackRF Frontend selected. Device Number: " << deviceNumber << std::endl;
+				HackRFFrontend::Initialize();
+				device = new HackRFFrontend(deviceNumber);
 				device->SetSampleRate(sampleRate);
 				device->SetCenterFrequency(centerFrequency);
 	#ifdef NON_FREE
 			} else if (parser[CFG_DEVICE_TYPE] == "sdrplay") {
+				std::cout << "SDRPlay Frontend selected." << std::endl;
 				SDRPlayFrontend::Initialize();
 				device = new SDRPlayFrontend();
 				device->SetSampleRate(sampleRate);
@@ -404,9 +415,9 @@ int main(int argc, char **argv) {
 			device->SetAGC(true);
 		} else {
 			device->SetAGC(false);
-			device->SetMixerGain(lnaGain);
+			device->SetLNAGain(lnaGain);
 			device->SetLNAGain(vgaGain);
-			device->SetVGAGain(mixerGain);
+			device->SetMixerGain(mixerGain);
 		}
 
 		std::cout << "Starting " << device->GetName() << std::endl;

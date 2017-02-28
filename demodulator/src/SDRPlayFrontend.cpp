@@ -23,6 +23,7 @@ void SDRPlayFrontend::internalCallback(short *xi, short *xq, unsigned int firstS
 			delete[] ctx->buffer;
 		}
 		ctx->buffer = new float[numSamples*2];
+		ctx->bufferLength = numSamples;
 	}
 
 	for (unsigned int i=0; i<numSamples; i++) {

@@ -100,6 +100,13 @@ void RtlFrontend::internalCallback(unsigned char *data, unsigned int length) {
 
 	for (unsigned int i=0; i<length; i++) {
 		iq[i] = lut[data[i]];
+		if (i%1) {
+			qavg += alpha * (iq[i] - qavg);
+			iq[i] -= qavg;
+		} else {
+			iavg += alpha * (iq[i] - iavg);
+			iq[i] -= iavg;
+		}
 	}
 
 	this->cb(iq, length/2, FRONTEND_SAMPLETYPE_FLOATIQ);

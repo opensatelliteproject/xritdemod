@@ -58,10 +58,31 @@ libSatHelper: FORCE
 	@echo -e '\033[0;32mFinished building target: $@\033[0m'
 	@echo ' '
 
+librtlsdr: FORCE
+	@echo -e '\033[0;32mBuilding target: $@\033[0m'
+	@echo -e '\033[0;34m'
+	@git clone https://github.com/librtlsdr/librtlsdr
+	@mkdir librtlsdr/build -p
+	@cd librtlsdr/build && cmake ..
+	$(MAKE) -C librtlsdr/build
+	@echo -e '\033[0m'
+	@echo -e '\033[0;32mFinished building target: $@\033[0m'
+	@echo ' '
+
 libSatHelper-install: FORCE
 	@echo -e '\033[0;32mInstalling target: $@\033[0m'
 	@echo -e '\033[0;34m'
 	$(MAKE) -C libsathelper install
+	@ldconfig
+	@echo -e '\033[0m'
+	@echo -e '\033[0;32mFinished installing target: $@\033[0m'
+	@echo ' '
+
+librtlsdr-install: FORCE
+	@echo -e '\033[0;32mInstalling target: $@\033[0m'
+	@echo -e '\033[0;34m'
+	$(MAKE) -C librtlsdr/build install
+	@echo -e 'Running ldconfig'
 	@ldconfig
 	@echo -e '\033[0m'
 	@echo -e '\033[0;32mFinished installing target: $@\033[0m'

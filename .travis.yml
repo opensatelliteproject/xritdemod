@@ -8,9 +8,9 @@ before_install:
   - sudo add-apt-repository ppa:myriadrf/drivers -y
   - sudo add-apt-repository ppa:myriadrf/gnuradio -y
   - sudo apt-get -qq update
-  - sudo apt-get install -y libairspy-dev libusb-1.0-0-dev
+  - sudo apt-get install -y libairspy-dev libusb-1.0-0-dev libhackrf-dev libhackrf0
 env:
   - CTEST_OUTPUT_ON_FAILURE=1 CMAKE_INSTALL_PREFIX=/usr
 
 script:
-  - make libcorrect && sudo make libcorrect-install && make libSatHelper && sudo make libSatHelper-install && make && make test
+  - make libcorrect && sudo make libcorrect-install && make libSatHelper && sudo make libSatHelper-install && make librtlsdr && sudo make librtlsdr-install && make && make test

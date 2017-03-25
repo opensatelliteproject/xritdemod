@@ -40,6 +40,7 @@
 #define AIRSPY_R2_DEFAULT_SAMPLERATE   2500000
 #define DEFAULT_SAMPLE_RATE AIRSPY_MINI_DEFAULT_SAMPLERATE
 #define DEFAULT_DECIMATION 1
+#define DEFAULT_DEVICE_NUMBER 0
 
 #define DEFAULT_DECODER_ADDRESS "127.0.0.1"
 #define DEFAULT_DECODER_PORT 5000
@@ -70,6 +71,7 @@
 #define CFG_PLL_ALPHA "pllAlpha"
 #define CFG_DECODER_ADDRESS "decoderAddress"
 #define CFG_DECODER_PORT "decoderPort"
+#define CFG_DEVICE_NUM "deviceNumber"
 
 // Compilation parameters
 

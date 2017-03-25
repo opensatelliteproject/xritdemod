@@ -101,6 +101,7 @@ void SymbolManager::add(std::complex<float> *data, int length) {
 
     if (dataQueue.size() >= SM_MAX_SYMBOL_BUFFER) {
         std::cerr << "SymbolManager Buffer is full!!! Dropping samples." << std::endl;
+        dataMutex.unlock();
         return;
     }
 

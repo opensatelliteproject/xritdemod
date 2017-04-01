@@ -37,6 +37,9 @@ private:
 
 	uint32_t sampleRate;
 	uint32_t centerFrequency;
+	uint8_t lnaGain;
+	uint8_t vgaGain;
+	uint8_t mixerGain;
 
 	int SamplesAvailableCallback(airspy_transfer *transfer);
 public:

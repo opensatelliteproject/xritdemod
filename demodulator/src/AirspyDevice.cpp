@@ -110,6 +110,12 @@ AirspyDevice::AirspyDevice() {
 					<< std::endl;
 			throw SatHelperException("There was an error initializing AirSpy.");
 		}
+
+		SetSampleRate(availableSampleRates[0]);
+
+		SetLNAGain(8);
+		SetMixerGain(5);
+		SetVGAGain(5);
 	}
 }
 
@@ -147,20 +153,34 @@ void AirspyDevice::SetAGC(bool agc) {
 	} else {
 		airspy_set_lna_agc(device, 0);
 		airspy_set_mixer_agc(device, 0);
+		SetLNAGain(lnaGain);
+		SetMixerGain(mixerGain);
 	}
 }
 
 
 void AirspyDevice::SetLNAGain(uint8_t value) {
-	airspy_set_lna_gain(device, value);
+	int result = airspy_set_lna_gain(device, value) ;
+	if (result != AIRSPY_SUCCESS) {
+		std::cout << "Error setting LNA Gain to " << (int) value << ": " << AIRSPY_ERROR << std::endl;
+	}
+	lnaGain = value;
 }
 
 void AirspyDevice::SetVGAGain(uint8_t value) {
-	airspy_set_vga_gain(device, value);
+	int result = airspy_set_vga_gain(device, value);
+	if (result != AIRSPY_SUCCESS) {
+		std::cout << "Error setting VGA Gain to " << (int) value << ": " << AIRSPY_ERROR << std::endl;
+	}
+	vgaGain = value;
 }
 
 void AirspyDevice::SetMixerGain(uint8_t value) {
-	airspy_set_mixer_gain(device, value);
+	int result = airspy_set_mixer_gain(device, value);
+	if (result != AIRSPY_SUCCESS) {
+		std::cout << "Error setting Mixer Gain to " << (int) value << ": " << AIRSPY_ERROR << std::endl;
+	}
+	mixerGain = value;
 }
 
 const std::vector<uint32_t>& AirspyDevice::GetAvailableSampleRates() {

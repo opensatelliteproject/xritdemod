@@ -30,7 +30,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseOfMfc>Static</UseOfMfc>
+    <UseOfMfc>false</UseOfMfc>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -87,8 +87,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>..\sathelper;..\correct;..\airspy;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
-    <IncludePath>..\sathelper;..\correct;..\airspy;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>..\librtlsdr;..\sathelper;..\correct;..\airspy;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>..\librtlsdr\include;..\sathelper;..\correct;..\airspy;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -133,14 +133,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=2;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;MAJOR_VERSION=1;MINOR_VERSION=0;MAINT_VERSION=3;GIT_SHA1=Microsoft Visual C++ Compiler</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SatHelper.lib;libcorrect.lib;airspy.lib</AdditionalDependencies>
+      <AdditionalDependencies>SatHelper.lib;libcorrect.lib;airspy.lib;librtlsdr.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -168,7 +168,10 @@
     <ClInclude Include="src\DiagManager.h" />
     <ClInclude Include="src\ExitHandler.h" />
     <ClInclude Include="src\FrontendDevice.h" />
+    <ClInclude Include="src\HackRFFrontend.h" />
     <ClInclude Include="src\Parameters.h" />
+    <ClInclude Include="src\RtlFrontend.h" />
+    <ClInclude Include="src\SDRPlayFrontend.h" />
     <ClInclude Include="src\SymbolManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -177,6 +180,9 @@
     <ClCompile Include="src\demodulator.cpp" />
     <ClCompile Include="src\DiagManager.cpp" />
     <ClCompile Include="src\ExitHandler.cpp" />
+    <ClCompile Include="src\HackRFFrontend.cpp" />
+    <ClCompile Include="src\RtlFrontend.cpp" />
+    <ClCompile Include="src\SDRPlayFrontend.cpp" />
     <ClCompile Include="src\SymbolManager.cpp" />
   </ItemGroup>
   <ItemGroup>

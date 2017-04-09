@@ -357,12 +357,14 @@ int main(int argc, char **argv) {
 				device = new RtlFrontend(deviceNumber);
 				device->SetSampleRate(sampleRate);
 				device->SetCenterFrequency(centerFrequency);
+#if 0
 			} else if (parser[CFG_DEVICE_TYPE] == "hackrf") {
 				std::cout << "HackRF Frontend selected. Device Number: " << deviceNumber << std::endl;
 				HackRFFrontend::Initialize();
 				device = new HackRFFrontend(deviceNumber);
 				device->SetSampleRate(sampleRate);
 				device->SetCenterFrequency(centerFrequency);
+#endif
 	#ifdef NON_FREE
 			} else if (parser[CFG_DEVICE_TYPE] == "sdrplay") {
 				std::cout << "SDRPlay Frontend selected." << std::endl;

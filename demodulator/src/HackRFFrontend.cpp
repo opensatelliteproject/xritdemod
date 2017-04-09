@@ -5,6 +5,7 @@
  *      Author: Lucas Teske
  */
 
+#if 0
 #include "HackRFFrontend.h"
 #include <SatHelper/exceptions.h>
 #include <iostream>
@@ -222,3 +223,4 @@ uint32_t HackRFFrontend::GetSampleRate() {
 void HackRFFrontend::SetSamplesAvailableCallback(std::function<void(void*data, int length, int type)> cb) {
 	this->cb = cb;
 }
+#endif

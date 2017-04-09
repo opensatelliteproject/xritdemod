@@ -5,6 +5,8 @@
  *      Author: Lucas Teske
  */
 
+#if 0
+
 #ifndef SRC_HACKRFFRONTEND_H_
 #define SRC_HACKRFFRONTEND_H_
 
@@ -61,3 +63,5 @@ public:
 };
 
 #endif /* SRC_HACKRFFRONTEND_H_ */
+
+#endif

@@ -10,6 +10,7 @@
 
 #define FRONTEND_SAMPLETYPE_FLOATIQ 0
 #define FRONTEND_SAMPLETYPE_S16IQ 1
+#define FRONTEND_SAMPLETYPE_S8IQ 2
 
 #include <cstdint>
 #include <functional>

@@ -59,6 +59,11 @@ void onSamplesAvailable(void *fdata, int length, int type) {
 			int16_t *d = (int16_t *)fdata;
 			samplesFifo.addSample(d[i] / 32768.f);
 		}
+	}else if (type == FRONTEND_SAMPLETYPE_S8IQ) {
+		for (int i=0; i<length*2; i++) {
+			int8_t *d = (int8_t *)fdata;
+			samplesFifo.addSample(d[i] / 128.f);
+		}
 	} else {
 		std::cerr << "Unknown sample type: " << type << std::endl;
 	}

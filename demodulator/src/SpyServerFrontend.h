@@ -24,13 +24,19 @@ enum ParserPhase {
 
 class SpyServerFrontend: public FrontendDevice {
 private:
-	const int BufferSize = 64 * 1024;
+	const uint BufferSize = 64 * 1024;
 	const int DefaultDisplayPixels = 2000;
 	const int DefaultFFTRange = 127;
 	const uint32_t ProtocolVersion = SPYSERVER_PROTOCOL_VERSION;
 	const std::string SoftwareID = std::string("OpenSatelliteProject " QUOTE(MAJOR_VERSION) "."  QUOTE(MINOR_VERSION) "." QUOTE(MAINT_VERSION));
+	const std::string NameNoDevice = std::string("SpyServer - No Device");
+	const std::string NameAirspyOne = std::string("SpyServer - Airspy One");
+	const std::string NameAirspyHF = std::string("SpyServer - Airspy HF+");
+	const std::string NameRTLSDR = std::string("SpyServer - RTLSDR");
+	const std::string NameUnknown = std::string("SpyServer - Unknown Device");
 
     SatHelper::TcpClient client;
+
     std::atomic_bool terminated;
     std::atomic_bool streaming;
     std::atomic_bool gotDeviceInfo;
@@ -39,6 +45,11 @@ private:
     std::atomic_bool isConnected;
 
     uint8_t *headerData;
+    uint8_t *bodyBuffer;
+    uint64_t bodyBufferLength;
+    uint32_t parserPosition;
+    uint32_t lastSequenceNumber;
+
     std::thread *receiverThread;
 
     SatHelperException error;
@@ -47,14 +58,24 @@ private:
     int port;
 
     DeviceInfo deviceInfo;
-    uint32_t parserPhase;
+    MessageHeader header;
+
     uint32_t streamingMode;
-    int32_t gain;
+    uint32_t parserPhase;
+
     uint32_t droppedBuffers;
-    uint32_t lastSequenceNumber;
     std::atomic<int64_t> down_stream_bytes;
-    int32_t parserPosition;
-    uint8_t *bodyBuffer;
+
+
+    uint32_t minimumTunableFrequency;
+    uint32_t maximumTunableFrequency;
+    uint32_t deviceCenterFrequency;
+    uint32_t channelCenterFrequency;
+    int32_t gain;
+
+    std::vector<uint32_t> availableSampleRates;
+
+	std::function<void(void *data, int length, int type)> cb;
 
     void Connect();
     void Disconnect();
@@ -62,11 +83,19 @@ private:
     void Cleanup();
     void OnConnect();
     bool SetSetting(uint32_t settingType, std::vector<uint32_t> params);
-    bool SendCommand(uint32_t cmd, uint8_t *args);
-    void ParseMessage(char *buffer, int len);
-    int ParseHeader(char *buffer, int len);
-
+    bool SendCommand(uint32_t cmd, std::vector<uint8_t> args);
+    void ParseMessage(char *buffer, uint32_t len);
+    int ParseHeader(char *buffer, uint32_t len);
+    int ParseBody(char *buffer, uint32_t len);
+    void ProcessDeviceInfo();
+    void ProcessClientSync();
+    void ProcessUInt8Samples();
+    void ProcessInt16Samples();
+    void ProcessFloatSamples();
+    void ProcessUInt8FFT();
+    void HandleNewMessage();
     void threadLoop();
+
 public:
 	SpyServerFrontend(std::string &hostname, int port);
 	virtual ~SpyServerFrontend();

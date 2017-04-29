@@ -114,6 +114,11 @@ void processSamples() {
 		return;
 	}
 
+	if (samplesFifo.size() < 64 * 1024) {
+		// Lets wait for more samples
+		return;
+	}
+
 	length = samplesFifo.size() / 2;
 	checkAndResizeBuffers(length);
 	// Do unsafe locks and copy queue for the buffer;

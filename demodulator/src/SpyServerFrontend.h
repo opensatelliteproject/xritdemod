@@ -22,7 +22,7 @@ enum ParserPhase {
 	ReadingData
 };
 
-#define SAMPLE_BUFFER_SIZE 16384
+#define SAMPLE_BUFFER_SIZE 256 * 1024
 
 
 class SpyServerFrontend: public FrontendDevice {

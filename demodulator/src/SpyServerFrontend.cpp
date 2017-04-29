@@ -3,6 +3,7 @@
  *
  *  Created on: 21/04/2017
  *      Author: Lucas Teske
+ *      Based on Youssef Touil (youssef@live.com) C# implementation.
  */
 
 #include "SpyServerFrontend.h"
@@ -17,7 +18,10 @@ SpyServerFrontend::SpyServerFrontend(std::string &hostname, int port) :
 		bodyBufferLength(0), parserPosition(0), lastSequenceNumber(0),
 		receiverThread(NULL), hasError(false), hostname(hostname), port(port), streamingMode(STREAM_MODE_IQ_ONLY),
 		parserPhase(0), droppedBuffers(0), down_stream_bytes(0), minimumTunableFrequency(0), maximumTunableFrequency(0),
-		deviceCenterFrequency(0), channelCenterFrequency(0), gain(0) {
+		deviceCenterFrequency(0), channelCenterFrequency(0), channelDecimationStageCount(0), gain(0),
+		dataFloatQueue(SAMPLE_BUFFER_SIZE), dataS16Queue(SAMPLE_BUFFER_SIZE), dataS8Queue(SAMPLE_BUFFER_SIZE) {
+
+	std::cout << "SpyServerFrontend(" << hostname << ", " << port << ")" << std::endl;
 }
 
 SpyServerFrontend::~SpyServerFrontend() {
@@ -29,9 +33,10 @@ void SpyServerFrontend::Connect() {
 	if (receiverThread != NULL) {
 		return;
 	}
-
+	std::cout << "SpyServer: Trying to connect" << std::endl;
 	client.Connect();
 	isConnected = true;
+	std::cout << "SpyServer: Connected" << std::endl;
 
 	SayHello();
 	Cleanup();
@@ -45,19 +50,18 @@ void SpyServerFrontend::Connect() {
 
 	for (int i=0; i<1000 && !hasError; i++) {
 		if (gotDeviceInfo) {
-			if (gotDeviceInfo) {
-				if (deviceInfo.DeviceType == DEVICE_INVALID) {
-					error = SatHelperException("Server is up but no device is available");
-					hasError = true;
-					break;
-				}
+			if (deviceInfo.DeviceType == DEVICE_INVALID) {
+				error = SatHelperException("Server is up but no device is available");
+				hasError = true;
+				break;
+			}
 
-				if (gotSyncInfo) {
-					OnConnect();
-					return;
-				}
+			if (gotSyncInfo) {
+				OnConnect();
+				return;
 			}
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
 	Disconnect();
@@ -90,6 +94,11 @@ void SpyServerFrontend::OnConnect() {
 	//SetSetting(SETTING_FFT_DISPLAY_PIXELS, { displayPixels });
 	//SetSetting(SETTING_FFT_DB_OFFSET, { fftOffset });
 	//SetSetting(SETTING_FFT_DB_RANGE, { fftRange });
+	//deviceInfo.MaximumSampleRate
+	//availableSampleRates
+	for (int i=0; i<=deviceInfo.DecimationStageCount; i++) {
+		availableSampleRates.push_back(deviceInfo.MaximumSampleRate / (double)(1 << i));
+	}
 }
 
 bool SpyServerFrontend::SetSetting(uint32_t settingType, std::vector<uint32_t> params) {
@@ -378,31 +387,118 @@ void SpyServerFrontend::ProcessClientSync() {
 }
 
 void SpyServerFrontend::ProcessUInt8Samples() {
+	  uint32_t numSamples = header.BodySize / 4;
 
+	  if (dataS8Queue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
+	    uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataS8Queue.size();
+	    dataS8Queue.addSamples((int8_t *)bodyBuffer, samplesToAdd);
+	    numSamples -= samplesToAdd;
+
+	    // CircularBuffer is now full, so copy to output buffer
+	    dataS8Queue.unsafe_lockMutex();
+	    for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
+	      s8Buffer[i] = dataS8Queue.unsafe_takeSample();
+	    }
+	    dataS8Queue.unsafe_unlockMutex();
+
+	    // Write output to callback
+	    cb(s8Buffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_S8IQ);
+
+	    // Add Remaining Samples.
+	    if (numSamples > 0) {
+	      dataS8Queue.addSamples(((int8_t *)bodyBuffer) + samplesToAdd, numSamples);
+	    }
+	  } else {
+	    // Circular Buffer has enough space, so just add.
+	    dataS8Queue.addSamples((int8_t *)bodyBuffer, numSamples);
+	  }
 }
 
 void SpyServerFrontend::ProcessInt16Samples() {
-	if (cb != NULL) {
-		cb(bodyBuffer, header.BodySize / 4, FRONTEND_SAMPLETYPE_S16IQ);
+	uint32_t numSamples = header.BodySize / 4;
+
+	if (dataS16Queue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
+		uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataS16Queue.size();
+		dataS16Queue.addSamples((int16_t *)bodyBuffer, samplesToAdd);
+		numSamples -= samplesToAdd;
+
+		// CircularBuffer is now full, so copy to output buffer
+		dataS16Queue.unsafe_lockMutex();
+		for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
+			s16Buffer[i] = dataS16Queue.unsafe_takeSample();
+		}
+		dataS16Queue.unsafe_unlockMutex();
+
+		// Write output to callback
+		cb(s16Buffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_S16IQ);
+
+		// Add Remaining Samples.
+		if (numSamples > 0) {
+			dataS16Queue.addSamples(((int16_t *)bodyBuffer) + samplesToAdd, numSamples);
+		}
+	} else {
+		// Circular Buffer has enough space, so just add.
+		dataS16Queue.addSamples((int16_t *)bodyBuffer, numSamples);
 	}
 }
 
 void SpyServerFrontend::ProcessFloatSamples() {
-	if (cb != NULL) {
-		cb(bodyBuffer, header.BodySize / 8, FRONTEND_SAMPLETYPE_FLOATIQ);
-	}
+	  uint32_t numSamples = header.BodySize / 4;
+
+	  if (dataFloatQueue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
+	    uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataFloatQueue.size();
+	    dataFloatQueue.addSamples((float *)bodyBuffer, samplesToAdd);
+	    numSamples -= samplesToAdd;
+
+	    // CircularBuffer is now full, so copy to output buffer
+	    dataFloatQueue.unsafe_lockMutex();
+	    for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
+	      fBuffer[i] = dataFloatQueue.unsafe_takeSample();
+	    }
+	    dataFloatQueue.unsafe_unlockMutex();
+
+	    // Write output to callback
+	    cb(fBuffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_FLOATIQ);
+
+	    // Add Remaining Samples.
+	    if (numSamples > 0) {
+	      dataFloatQueue.addSamples(((float *)bodyBuffer) + samplesToAdd, numSamples);
+	    }
+	  } else {
+	    // Circular Buffer has enough space, so just add.
+	    dataFloatQueue.addSamples((float *)bodyBuffer, numSamples);
+	  }
 }
 
 void SpyServerFrontend::ProcessUInt8FFT() {
+	// TODO
+	std::cerr << "UInt8 FFT Samples processing not implemented!!!" << std::endl;
+}
 
+void SpyServerFrontend::SetStreamState() {
+	SetSetting(SETTING_STREAMING_ENABLED, {(uint)(streaming ? 1 : 0)});
 }
 
 uint32_t SpyServerFrontend::SetSampleRate(uint32_t sampleRate) {
-	return 0; // TODO
+	for (int i=0; i<availableSampleRates.size(); i++) {
+		if (availableSampleRates[i] == sampleRate) {
+            channelDecimationStageCount = i;
+            SetSetting(SETTING_IQ_DECIMATION, {channelDecimationStageCount});
+            return GetSampleRate();
+		}
+	}
+	std::cerr << "Sample rate not supported: " << sampleRate << std::endl;
+	std::cerr << "Supported Sample Rates: " << std::endl;
+	for (uint32_t sr: availableSampleRates) {
+		std::cout << "	" << sr << std::endl;
+	}
+	return GetSampleRate();
 }
 
 uint32_t SpyServerFrontend::SetCenterFrequency(uint32_t centerFrequency) {
-	return 0; // TODO
+    channelCenterFrequency = centerFrequency;
+    SetSetting(SETTING_IQ_FREQUENCY, {channelCenterFrequency});
+    return centerFrequency;
 }
 
 const std::vector<uint32_t>& SpyServerFrontend::GetAvailableSampleRates() {
@@ -410,27 +506,36 @@ const std::vector<uint32_t>& SpyServerFrontend::GetAvailableSampleRates() {
 }
 
 void SpyServerFrontend::Start() {
-	Connect();
+    if (!streaming) {
+        streaming = true;
+        down_stream_bytes = 0;
+        SetStreamState();
+    }
 }
 
 void SpyServerFrontend::Stop() {
-
+    if (!streaming) {
+        streaming = false;
+        down_stream_bytes = 0;
+        SetStreamState();
+    }
 }
 
 void SpyServerFrontend::SetAGC(bool agc) {
-
+	std::cerr << "AGC Not Supported" << std::endl;
 }
 
 void SpyServerFrontend::SetLNAGain(uint8_t value) {
-
+    gain = value;
+    SetSetting(SETTING_GAIN, {(uint32_t)gain});
 }
 
 void SpyServerFrontend::SetVGAGain(uint8_t value) {
-
+	std::cerr << "VGA Gain Not Supported" << std::endl;
 }
 
 void SpyServerFrontend::SetMixerGain(uint8_t value) {
-
+	std::cerr << "Mixer Gain Not Supported" << std::endl;
 }
 
 uint32_t SpyServerFrontend::GetCenterFrequency() {
@@ -453,7 +558,7 @@ const std::string &SpyServerFrontend::GetName() {
 }
 
 uint32_t SpyServerFrontend::GetSampleRate() {
-	return 0; // TODO
+	return (int) (deviceInfo.MaximumSampleRate / (double) (1 << channelDecimationStageCount));
 }
 
 void SpyServerFrontend::SetSamplesAvailableCallback(std::function<void(void*data, int length, int type)> cb) {

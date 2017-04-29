@@ -3,6 +3,7 @@
  *
  *  Created on: 21/04/2017
  *      Author: Lucas Teske
+ *      Based on Youssef Touil (youssef@live.com) C# implementation.
  */
 
 #ifndef SRC_SPYSERVERFRONTEND_H_
@@ -20,6 +21,8 @@ enum ParserPhase {
 	AcquiringHeader,
 	ReadingData
 };
+
+#define SAMPLE_BUFFER_SIZE 16384
 
 
 class SpyServerFrontend: public FrontendDevice {
@@ -71,14 +74,21 @@ private:
     uint32_t maximumTunableFrequency;
     uint32_t deviceCenterFrequency;
     uint32_t channelCenterFrequency;
+    uint32_t channelDecimationStageCount;
     int32_t gain;
 
     std::vector<uint32_t> availableSampleRates;
+    SatHelper::CircularBuffer<float> dataFloatQueue;
+    SatHelper::CircularBuffer<int16_t> dataS16Queue;
+    SatHelper::CircularBuffer<int8_t> dataS8Queue;
+
+    // Not the best way, I know
+    float fBuffer[SAMPLE_BUFFER_SIZE];
+    int16_t s16Buffer[SAMPLE_BUFFER_SIZE];
+    int8_t s8Buffer[SAMPLE_BUFFER_SIZE];
 
 	std::function<void(void *data, int length, int type)> cb;
 
-    void Connect();
-    void Disconnect();
     bool SayHello();
     void Cleanup();
     void OnConnect();
@@ -94,6 +104,7 @@ private:
     void ProcessFloatSamples();
     void ProcessUInt8FFT();
     void HandleNewMessage();
+    void SetStreamState();
     void threadLoop();
 
 public:
@@ -119,6 +130,8 @@ public:
 
 	void SetSamplesAvailableCallback(std::function<void(void*data, int length, int type)> cb) override;
 
+    void Connect();
+    void Disconnect();
 
 };
 

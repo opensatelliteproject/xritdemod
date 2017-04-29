@@ -96,7 +96,7 @@ void SpyServerFrontend::OnConnect() {
 	//SetSetting(SETTING_FFT_DB_RANGE, { fftRange });
 	//deviceInfo.MaximumSampleRate
 	//availableSampleRates
-	for (int i=0; i<=deviceInfo.DecimationStageCount; i++) {
+	for (unsigned int i=0; i<=deviceInfo.DecimationStageCount; i++) {
 		availableSampleRates.push_back(deviceInfo.MaximumSampleRate / (double)(1 << i));
 	}
 }
@@ -485,7 +485,7 @@ void SpyServerFrontend::SetStreamState() {
 }
 
 uint32_t SpyServerFrontend::SetSampleRate(uint32_t sampleRate) {
-	for (int i=0; i<availableSampleRates.size(); i++) {
+	for (unsigned int i=0; i<availableSampleRates.size(); i++) {
 		if (availableSampleRates[i] == sampleRate) {
             channelDecimationStageCount = i;
             SetSetting(SETTING_IQ_DECIMATION, {channelDecimationStageCount});

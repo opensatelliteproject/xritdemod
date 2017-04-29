@@ -236,9 +236,12 @@ void SpyServerFrontend::ParseMessage(char *buffer, uint32_t len) {
 
 			if (parserPhase == AcquiringHeader) {
 				if (header.MessageType != MSG_TYPE_DEVICE_INFO && header.MessageType != MSG_TYPE_CLIENT_SYNC) {
-					uint32_t gap = header.SequenceNumber - lastSequenceNumber - 1;
+					int32_t gap = header.SequenceNumber - lastSequenceNumber - 1;
 					lastSequenceNumber = header.SequenceNumber;
 					droppedBuffers += gap;
+					if (gap > 0) {
+						std::cerr << "Lost " << gap << " frames from SpyServer!" << std::endl;
+					}
 				}
 				HandleNewMessage();
 			}

@@ -486,7 +486,6 @@ int main(int argc, char **argv) {
 
 		std::cout << "Closing..." << std::endl;
 	} catch (SatHelperException &e) {
-		std::cerr << "A: " << e.what() << std::endl;
 		std::cerr << "Unhandled exception: " << e.reason() << std::endl;
 	}
 

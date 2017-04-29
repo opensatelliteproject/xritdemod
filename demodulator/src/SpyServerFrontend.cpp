@@ -89,7 +89,7 @@ void SpyServerFrontend::Disconnect() {
 
 void SpyServerFrontend::OnConnect() {
 	SetSetting(SETTING_STREAMING_MODE, { streamingMode });
-	SetSetting(SETTING_IQ_FORMAT, { STREAM_FORMAT_INT16 });
+	SetSetting(SETTING_IQ_FORMAT, { STREAM_FORMAT_UINT8 });
 	SetSetting(SETTING_FFT_FORMAT, { STREAM_FORMAT_UINT8 });
 	//SetSetting(SETTING_FFT_DISPLAY_PIXELS, { displayPixels });
 	//SetSetting(SETTING_FFT_DB_OFFSET, { fftOffset });
@@ -390,35 +390,37 @@ void SpyServerFrontend::ProcessClientSync() {
 }
 
 void SpyServerFrontend::ProcessUInt8Samples() {
-	  uint32_t numSamples = header.BodySize / 4;
+	// Spy Server sends out uint8_t that is the sample shifted by 128.
+	// So we store as uint8, but sends to the callback converted as float.
+	uint32_t numSamples = header.BodySize;
 
-	  if (dataS8Queue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
-	    uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataS8Queue.size();
-	    dataS8Queue.addSamples((int8_t *)bodyBuffer, samplesToAdd);
-	    numSamples -= samplesToAdd;
+	if (dataS8Queue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
+		uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataS8Queue.size();
+		dataS8Queue.addSamples(bodyBuffer, samplesToAdd);
+		numSamples -= samplesToAdd;
 
-	    // CircularBuffer is now full, so copy to output buffer
-	    dataS8Queue.unsafe_lockMutex();
-	    for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
-	      s8Buffer[i] = dataS8Queue.unsafe_takeSample();
-	    }
-	    dataS8Queue.unsafe_unlockMutex();
+		// CircularBuffer is now full, so copy to output buffer
+		dataS8Queue.unsafe_lockMutex();
+		for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
+			fBuffer[i] = (dataS8Queue.unsafe_takeSample() - 128) / 128.f;
+		}
+		dataS8Queue.unsafe_unlockMutex();
 
-	    // Write output to callback
-	    cb(s8Buffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_S8IQ);
+		// Write output to callback
+		cb(fBuffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_FLOATIQ);
 
-	    // Add Remaining Samples.
-	    if (numSamples > 0) {
-	      dataS8Queue.addSamples(((int8_t *)bodyBuffer) + samplesToAdd, numSamples);
-	    }
-	  } else {
-	    // Circular Buffer has enough space, so just add.
-	    dataS8Queue.addSamples((int8_t *)bodyBuffer, numSamples);
-	  }
+		// Add Remaining Samples.
+		if (numSamples > 0) {
+		  dataS8Queue.addSamples((bodyBuffer) + samplesToAdd, numSamples);
+		}
+	} else {
+		// Circular Buffer has enough space, so just add.
+		dataS8Queue.addSamples(bodyBuffer, numSamples);
+	}
 }
 
 void SpyServerFrontend::ProcessInt16Samples() {
-	uint32_t numSamples = header.BodySize / 4;
+	uint32_t numSamples = header.BodySize / 2;
 
 	if (dataS16Queue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
 		uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataS16Queue.size();

@@ -80,12 +80,11 @@ private:
     std::vector<uint32_t> availableSampleRates;
     SatHelper::CircularBuffer<float> dataFloatQueue;
     SatHelper::CircularBuffer<int16_t> dataS16Queue;
-    SatHelper::CircularBuffer<int8_t> dataS8Queue;
+    SatHelper::CircularBuffer<uint8_t> dataS8Queue;
 
     // Not the best way, I know
     float fBuffer[SAMPLE_BUFFER_SIZE];
     int16_t s16Buffer[SAMPLE_BUFFER_SIZE];
-    int8_t s8Buffer[SAMPLE_BUFFER_SIZE];
 
 	std::function<void(void *data, int length, int type)> cb;
 

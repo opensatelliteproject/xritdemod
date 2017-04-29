@@ -22,9 +22,13 @@
 #include "ExitHandler.h"
 #include "SDRPlayFrontend.h"
 #include "HackRFFrontend.h"
+#include "SpyServerFrontend.h"
 
 using namespace OpenSatelliteProject;
 using namespace SatHelper;
+
+// Uncomment this to passthrough the input samples to output
+//#define DEBUG_PASSTHROUGH
 
 #include "Parameters.h"
 
@@ -55,10 +59,19 @@ void onSamplesAvailable(void *fdata, int length, int type) {
 	if (type == FRONTEND_SAMPLETYPE_FLOATIQ) {
 		samplesFifo.addSamples((float *) fdata, length * 2);
 	} else if (type == FRONTEND_SAMPLETYPE_S16IQ) {
+		int16_t *d = (int16_t *)fdata;
+		samplesFifo.unsafe_lockMutex();
 		for (int i=0; i<length*2; i++) {
-			int16_t *d = (int16_t *)fdata;
-			samplesFifo.addSample(d[i] / 32768.f);
+			samplesFifo.unsafe_addSample(d[i] / 32768.f);
 		}
+		samplesFifo.unsafe_unlockMutex();
+	}else if (type == FRONTEND_SAMPLETYPE_S8IQ) {
+		int8_t *d = (int8_t *)fdata;
+		samplesFifo.unsafe_lockMutex();
+		for (int i=0; i<length*2; i++) {
+			samplesFifo.unsafe_addSample(d[i] / 128.f);
+		}
+		samplesFifo.unsafe_unlockMutex();
 	} else {
 		std::cerr << "Unknown sample type: " << type << std::endl;
 	}
@@ -129,6 +142,7 @@ void processSamples() {
 	agc->Work(ba, bb, length);
 	swapBuffers(&ba, &bb);
 
+#ifndef DEBUG_PASSTHROUGH
 	// Filter
 	rrcFilter->Work(ba, bb, length);
 	swapBuffers(&ba, &bb);
@@ -146,6 +160,10 @@ void processSamples() {
 	if (diagManager != NULL) {
 		diagManager->addSamples((float *)ba, symbols < 1024 ? symbols : 1024);
 	}
+#else
+	std::cout << ba[0] << " - writting " << length << std::endl;
+	symbolManager->add((float *)ba, length*2);
+#endif
 }
 
 void symbolLoopFunc() {
@@ -357,6 +375,23 @@ int main(int argc, char **argv) {
 				device = new RtlFrontend(deviceNumber);
 				device->SetSampleRate(sampleRate);
 				device->SetCenterFrequency(centerFrequency);
+			} else if (parser[CFG_DEVICE_TYPE] == "spyserver") {
+				std::cout << "SpyServer Frontend selected." << std::endl;
+				if (!parser.hasKey(CFG_SPYSERVER_HOST)) {
+					std::cerr << "No Host specified with tag " CFG_SPYSERVER_HOST << std::endl;
+					return 1;
+				}
+
+				if (!parser.hasKey(CFG_SPYSERVER_PORT)) {
+					std::cerr << "No Port specified with tag " CFG_SPYSERVER_PORT << std::endl;
+					return 1;
+				}
+				device = new SpyServerFrontend(parser[CFG_SPYSERVER_HOST], parser.getInt(CFG_SPYSERVER_PORT));
+				SpyServerFrontend *d = (SpyServerFrontend *)(device);
+				d->Connect();
+				std::cout << "Server Device: " << d->GetName() << std::endl;
+				device->SetCenterFrequency(centerFrequency);
+				device->SetSampleRate(sampleRate);
 #if 0
 			} else if (parser[CFG_DEVICE_TYPE] == "hackrf") {
 				std::cout << "HackRF Frontend selected. Device Number: " << deviceNumber << std::endl;

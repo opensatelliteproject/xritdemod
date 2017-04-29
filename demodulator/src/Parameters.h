@@ -72,6 +72,9 @@
 #define CFG_DECODER_ADDRESS "decoderAddress"
 #define CFG_DECODER_PORT "decoderPort"
 #define CFG_DEVICE_NUM "deviceNumber"
+#define CFG_SPYSERVER_HOST "spyserverHost"
+#define CFG_SPYSERVER_PORT "spyserverPort"
+
 
 // Compilation parameters
 

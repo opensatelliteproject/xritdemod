@@ -89,7 +89,7 @@ void SpyServerFrontend::Disconnect() {
 
 void SpyServerFrontend::OnConnect() {
 	SetSetting(SETTING_STREAMING_MODE, { streamingMode });
-	SetSetting(SETTING_IQ_FORMAT, { STREAM_FORMAT_UINT8 });
+	SetSetting(SETTING_IQ_FORMAT, { STREAM_FORMAT_INT16 });
 	SetSetting(SETTING_FFT_FORMAT, { STREAM_FORMAT_UINT8 });
 	//SetSetting(SETTING_FFT_DISPLAY_PIXELS, { displayPixels });
 	//SetSetting(SETTING_FFT_DB_OFFSET, { fftOffset });

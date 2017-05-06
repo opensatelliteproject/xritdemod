@@ -78,8 +78,6 @@ private:
     int32_t gain;
 
     std::vector<uint32_t> availableSampleRates;
-    SatHelper::CircularBuffer<float> dataFloatQueue;
-    SatHelper::CircularBuffer<int16_t> dataS16Queue;
     SatHelper::CircularBuffer<uint8_t> dataS8Queue;
 
     // Not the best way, I know

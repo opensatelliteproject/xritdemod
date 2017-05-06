@@ -27,8 +27,8 @@ void SDRPlayFrontend::internalCallback(short *xi, short *xq, unsigned int firstS
 	}
 
 	for (unsigned int i=0; i<numSamples; i++) {
-		ctx->buffer[i*2+0] = xi[i] / 16384.f;
-		ctx->buffer[i*2+1] = xq[i] / 16384.f;
+		ctx->buffer[i*2+0] = xi[i] / 32768.f;
+		ctx->buffer[i*2+1] = xq[i] / 32768.f;
 	}
 
 	if (ctx->cb != NULL) {

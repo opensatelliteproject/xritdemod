@@ -19,7 +19,7 @@ SpyServerFrontend::SpyServerFrontend(std::string &hostname, int port) :
 		receiverThread(NULL), hasError(false), hostname(hostname), port(port), streamingMode(STREAM_MODE_IQ_ONLY),
 		parserPhase(0), droppedBuffers(0), down_stream_bytes(0), minimumTunableFrequency(0), maximumTunableFrequency(0),
 		deviceCenterFrequency(0), channelCenterFrequency(0), channelDecimationStageCount(0), gain(0),
-		dataFloatQueue(SAMPLE_BUFFER_SIZE), dataS16Queue(SAMPLE_BUFFER_SIZE), dataS8Queue(SAMPLE_BUFFER_SIZE) {
+		dataS8Queue(SAMPLE_BUFFER_SIZE) {
 
 	std::cout << "SpyServerFrontend(" << hostname << ", " << port << ")" << std::endl;
 }
@@ -382,7 +382,7 @@ void SpyServerFrontend::ProcessClientSync() {
 		break;
 	case STREAM_MODE_IQ_ONLY:
 		minimumTunableFrequency = sync.MinimumIQCenterFrequency;
-		maximumTunableFrequency = sync.MaximumFFTCenterFrequency;
+		maximumTunableFrequency = sync.MaximumIQCenterFrequency;
 		break;
 	}
 
@@ -421,58 +421,12 @@ void SpyServerFrontend::ProcessUInt8Samples() {
 
 void SpyServerFrontend::ProcessInt16Samples() {
 	uint32_t numSamples = header.BodySize / 2;
-
-	if (dataS16Queue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
-		uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataS16Queue.size();
-		dataS16Queue.addSamples((int16_t *)bodyBuffer, samplesToAdd);
-		numSamples -= samplesToAdd;
-
-		// CircularBuffer is now full, so copy to output buffer
-		dataS16Queue.unsafe_lockMutex();
-		for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
-			s16Buffer[i] = dataS16Queue.unsafe_takeSample();
-		}
-		dataS16Queue.unsafe_unlockMutex();
-
-		// Write output to callback
-		cb(s16Buffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_S16IQ);
-
-		// Add Remaining Samples.
-		if (numSamples > 0) {
-			dataS16Queue.addSamples(((int16_t *)bodyBuffer) + samplesToAdd, numSamples);
-		}
-	} else {
-		// Circular Buffer has enough space, so just add.
-		dataS16Queue.addSamples((int16_t *)bodyBuffer, numSamples);
-	}
+	cb(bodyBuffer, numSamples / 2, FRONTEND_SAMPLETYPE_S16IQ);
 }
 
 void SpyServerFrontend::ProcessFloatSamples() {
-	  uint32_t numSamples = header.BodySize / 4;
-
-	  if (dataFloatQueue.size() + numSamples >= SAMPLE_BUFFER_SIZE) {
-	    uint32_t samplesToAdd = SAMPLE_BUFFER_SIZE - dataFloatQueue.size();
-	    dataFloatQueue.addSamples((float *)bodyBuffer, samplesToAdd);
-	    numSamples -= samplesToAdd;
-
-	    // CircularBuffer is now full, so copy to output buffer
-	    dataFloatQueue.unsafe_lockMutex();
-	    for (int i=0; i<SAMPLE_BUFFER_SIZE; i++) {
-	      fBuffer[i] = dataFloatQueue.unsafe_takeSample();
-	    }
-	    dataFloatQueue.unsafe_unlockMutex();
-
-	    // Write output to callback
-	    cb(fBuffer, SAMPLE_BUFFER_SIZE / 2, FRONTEND_SAMPLETYPE_FLOATIQ);
-
-	    // Add Remaining Samples.
-	    if (numSamples > 0) {
-	      dataFloatQueue.addSamples(((float *)bodyBuffer) + samplesToAdd, numSamples);
-	    }
-	  } else {
-	    // Circular Buffer has enough space, so just add.
-	    dataFloatQueue.addSamples((float *)bodyBuffer, numSamples);
-	  }
+	uint32_t numSamples = header.BodySize / 4;
+	cb(bodyBuffer, numSamples / 2, FRONTEND_SAMPLETYPE_FLOATIQ);
 }
 
 void SpyServerFrontend::ProcessUInt8FFT() {

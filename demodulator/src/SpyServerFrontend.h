@@ -9,6 +9,7 @@
 #ifndef SRC_SPYSERVERFRONTEND_H_
 #define SRC_SPYSERVERFRONTEND_H_
 
+#define NOMINMAX
 #include "FrontendDevice.h"
 #include <SatHelper/sathelper.h>
 #include <atomic>
@@ -24,10 +25,9 @@ enum ParserPhase {
 
 #define SAMPLE_BUFFER_SIZE 256 * 1024
 
-
 class SpyServerFrontend: public FrontendDevice {
 private:
-	const uint BufferSize = 64 * 1024;
+    static constexpr unsigned int BufferSize = 64 * 1024;
 	const int DefaultDisplayPixels = 2000;
 	const int DefaultFFTRange = 127;
 	const uint32_t ProtocolVersion = SPYSERVER_PROTOCOL_VERSION;

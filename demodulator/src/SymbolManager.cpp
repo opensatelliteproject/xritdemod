@@ -6,11 +6,6 @@
  */
 
 #include "SymbolManager.h"
-#include "Parameters.h"
-#include <chrono>
-#include <iostream>
-#include <algorithm>
-
 
 namespace OpenSatelliteProject {
 
@@ -41,7 +36,7 @@ void SymbolManager::process() {
 	if (isConnected) {
 		dataMutex.lock();
 		if (dataQueue.size() > 0) {
-			int copySize =
+			size_t copySize =
 					dataQueue.size() > SM_SOCKET_BUFFER_SIZE ?
 							SM_SOCKET_BUFFER_SIZE : dataQueue.size();
 			for (int i = 0; i < copySize; i++) {
@@ -59,7 +54,7 @@ void SymbolManager::process() {
 		if (inBufferLength > 0) {
 			bool closeClient = false;
 			try {
-				client.Send(buffer, inBufferLength);
+				client.Send(buffer, static_cast<int>(inBufferLength));
 			} catch (SatHelper::ClientDisconnectedException &) {
 				std::cout << "Disconnected from decoder.\n";
 				isConnected = false;

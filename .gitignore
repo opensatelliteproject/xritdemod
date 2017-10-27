@@ -9,3 +9,6 @@ Release
 airspy
 librtlsdr
 build
+**/.idea
+.idea
+**/cmake-build-debug

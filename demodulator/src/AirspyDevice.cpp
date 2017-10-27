@@ -31,6 +31,14 @@ void AirspyDevice::SetSamplesAvailableCallback(std::function<void(void*data, int
 	this->cb = cb;
 }
 
+
+void AirspyDevice::SetBiasT(uint8_t value) {
+	int result = airspy_set_rf_bias(device, value);
+	if (result != AIRSPY_SUCCESS) {
+		std::cerr << "Error setting BiasT to " << value << ": " << AIRSPY_ERROR << std::endl;
+	}
+}
+
 AirspyDevice::AirspyDevice() {
 	int result = airspy_open(&device);
 	if (result != AIRSPY_SUCCESS) {
@@ -157,7 +165,6 @@ void AirspyDevice::SetAGC(bool agc) {
 		SetMixerGain(mixerGain);
 	}
 }
-
 
 void AirspyDevice::SetLNAGain(uint8_t value) {
 	int result = airspy_set_lna_gain(device, value) ;

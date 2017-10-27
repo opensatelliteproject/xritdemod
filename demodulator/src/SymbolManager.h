@@ -27,7 +27,7 @@ private:
     std::mutex dataMutex;
     SatHelper::TcpClient client;
     char *buffer;
-    int inBufferLength;
+    size_t inBufferLength;
     bool isConnected;
 
 public:
@@ -40,7 +40,7 @@ public:
     inline int symbolsInQueue() {
     	int s;
     	dataMutex.lock();
-    	s = dataQueue.size();
+    	s = static_cast<int>(dataQueue.size());
     	dataMutex.unlock();
     	return s;
     }

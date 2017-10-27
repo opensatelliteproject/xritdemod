@@ -8,7 +8,6 @@
 
 #include <iostream>
 #include <memory.h>
-#include <cstdint>
 #include <SatHelper/sathelper.h>
 #include "Display.h"
 #include "ChannelWriter.h"
@@ -16,14 +15,6 @@
 #include "StatisticsDispatcher.h"
 #include "parameters.h"
 #include "ExitHandler.h"
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <Ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
 
 using namespace std;
 
@@ -77,7 +68,7 @@ int main(int argc, char **argv) {
     bool runUi = false;
     bool dump = false;
     Statistics statistics;
-    bool isCorrupted = false;
+    bool isCorrupted;
     bool lastFrameOK = false;
     int flywheelCount = 0;
     int flywheelRecheck = DEFAULT_FLYWHEEL_RECHECK;
@@ -221,7 +212,6 @@ int main(int argc, char **argv) {
         while (masterRunning) {
             uint32_t chunkSize = CODEDFRAMESIZE;
             try {
-                checkTime = SatHelper::Tools::getTimestamp();
                 client.WaitForData(CODEDFRAMESIZE, TIMEOUT);
                 client.Receive((char *) codedData, chunkSize);
 
@@ -300,7 +290,7 @@ int main(int argc, char **argv) {
 #endif
                 float signalErrors = viterbi.GetPercentBER();
                 signalErrors = 100 - (signalErrors * 10);
-                uint8_t signalQuality = signalErrors < 0 ? 0 : (uint8_t) signalErrors;
+                uint8_t signalQuality = static_cast<uint8_t>(signalErrors < 0 ? 0 : signalErrors);
 
 #ifdef USE_LAST_FRAME_DATA
                 // Shift Back
@@ -313,7 +303,7 @@ int main(int argc, char **argv) {
                 // DeRandomize Stream
                 uint8_t skipsize = (SYNCWORDSIZE / 8);
                 memcpy(vitdecData, decodedData, FRAMESIZE);
-                memmove(decodedData, decodedData + skipsize, FRAMESIZE - skipsize);
+                memmove(decodedData, decodedData + skipsize, static_cast<size_t>(FRAMESIZE - skipsize));
                 deRandomizer.DeRandomize(decodedData, FRAMESIZE - skipsize);
 
                 averageVitCorrections += viterbi.GetBER();
@@ -322,7 +312,7 @@ int main(int argc, char **argv) {
                 // Reed Solomon Error Correction
                 int32_t derrors[4] = { 0, 0, 0, 0 };
 
-                for (int i = 0; i < RSBLOCKS; i++) {
+                for (uint8_t i = 0; i < RSBLOCKS; i++) {
                     reedSolomon.deinterleave(decodedData, rsWorkBuffer, i, RSBLOCKS);
                     derrors[i] = reedSolomon.decode_ccsds(rsWorkBuffer);
                     reedSolomon.interleave(rsWorkBuffer, rsCorrectedData, i, RSBLOCKS);
@@ -349,8 +339,8 @@ int main(int argc, char **argv) {
 
                 // Packet Header Filtering
                 //uint8_t versionNumber = (*rsCorrectedData) & 0xC0 >> 6;
-                uint8_t scid = ((*rsCorrectedData) & 0x3F) << 2 | (*(rsCorrectedData + 1) & 0xC0) >> 6;
-                uint8_t vcid = (*(rsCorrectedData + 1)) & 0x3F;
+                uint8_t scid = static_cast<uint8_t>(((*rsCorrectedData) & 0x3F) << 2 | (*(rsCorrectedData + 1) & 0xC0) >> 6);
+                uint8_t vcid = static_cast<uint8_t>((*(rsCorrectedData + 1)) & 0x3F);
 
                 // Packet Counter from Packet
                 uint32_t counter = *((uint32_t *) (rsCorrectedData + 2));
@@ -358,7 +348,7 @@ int main(int argc, char **argv) {
                 counter &= 0xFFFFFF00;
                 counter = counter >> 8;
 
-                uint8_t phaseCorr = phaseShift == SatHelper::PhaseShift::DEG_180 ? 180 : 0;
+                uint8_t phaseCorr = static_cast<uint8_t>(phaseShift == SatHelper::PhaseShift::DEG_180 ? 180 : 0);
                 uint16_t partialVitCorrections = (uint16_t) (averageVitCorrections / frameCount);
                 uint8_t partialRSCorrections = (uint8_t) (averageRSCorrections / frameCount);
 
@@ -377,23 +367,23 @@ int main(int argc, char **argv) {
                     lastPacketCount[vcid] = counter;
                     receivedPacketsPerFrame[vcid] = receivedPacketsPerFrame[vcid] == -1 ? 1 : receivedPacketsPerFrame[vcid] + 1;
 
-                    statistics.update(scid, vcid, (uint64_t) counter, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors, signalQuality, corr, phaseCorr,
+                    statistics.update(scid, vcid, (uint64_t) counter, static_cast<uint16_t>(viterbi.GetBER()), FRAMEBITS, derrors, signalQuality, static_cast<uint8_t>(corr), phaseCorr,
                             lostPackets, partialVitCorrections, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount,
                             syncWord, true);
 
                     if (runUi) {
-                        display.update(scid, vcid, (uint64_t) counter, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors, signalQuality, corr, phaseCorr,
+                        display.update(scid, vcid, (uint64_t) counter, static_cast<uint16_t>(viterbi.GetBER()), FRAMEBITS, derrors, signalQuality, static_cast<uint8_t>(corr), phaseCorr,
                                 lostPackets, partialVitCorrections, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame,
                                 frameCount, syncWord, true);
 
                         display.show();
                     }
                 } else {
-                    statistics.update(0, 0, 0, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors, 0, corr, 0, lostPackets, partialVitCorrections,
+                    statistics.update(0, 0, 0, static_cast<uint16_t>(viterbi.GetBER()), FRAMEBITS, derrors, 0, static_cast<uint8_t>(corr), 0, lostPackets, partialVitCorrections,
                             partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, syncWord, false);
 
                     if (runUi) {
-                        display.update(0, 0, 0, (int16_t) viterbi.GetBER(), FRAMEBITS, derrors, signalQuality, corr, phaseCorr, lostPackets,
+                        display.update(0, 0, 0, static_cast<uint16_t>(viterbi.GetBER()), FRAMEBITS, derrors, signalQuality, static_cast<uint8_t>(corr), phaseCorr, lostPackets,
                                 partialVitCorrections, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, syncWord,
                                 false);
 

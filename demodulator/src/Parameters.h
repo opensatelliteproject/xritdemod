@@ -30,7 +30,7 @@
 #define CLOCK_ALPHA 0.0037f
 #define CLOCK_MU 0.5f
 #define CLOCK_OMEGA_LIMIT 0.005f
-#define CLOCK_GAIN_OMEGA (CLOCK_ALPHA * CLOCK_ALPHA) / 4.0
+#define CLOCK_GAIN_OMEGA (CLOCK_ALPHA * CLOCK_ALPHA) / 4.0f
 #define AGC_RATE 0.01f
 #define AGC_REFERENCE 0.5f
 #define AGC_GAIN 1.f
@@ -48,6 +48,8 @@
 #define DEFAULT_LNA_GAIN 5
 #define DEFAULT_VGA_GAIN 5
 #define DEFAULT_MIX_GAIN 5
+
+#define DEFAULT_BIAST 0
 
 // FIFO Size in Samples
 // 1024 * 1024 samples is about 4Mb of ram.
@@ -74,7 +76,7 @@
 #define CFG_DEVICE_NUM "deviceNumber"
 #define CFG_SPYSERVER_HOST "spyserverHost"
 #define CFG_SPYSERVER_PORT "spyserverPort"
-
+#define CFG_BIAST "biast"
 
 // Compilation parameters
 

@@ -7,7 +7,6 @@
 
 #include "ChannelWriter.h"
 #include <sstream>
-#include <cstdio>
 #include <SatHelper/sathelper.h>
 
 ChannelWriter::ChannelWriter(std::string baseFolder) {
@@ -19,7 +18,7 @@ void ChannelWriter::writeChannel(uint8_t *data, int size, uint16_t vcid) {
   SatHelper::Tools::makedir(baseFolder);
   ss << baseFolder << "/channel_" << vcid << ".bin";
   FILE *f = fopen(ss.str().c_str(), "a+");
-  fwrite(data, size, 1, f);
+  fwrite(data, static_cast<size_t>(size), 1, f);
   fclose(f);
 }
 
@@ -32,7 +31,7 @@ void ChannelWriter::dumpCorruptedPacket(uint8_t *data, int size, int type) {
   FILE *f = fopen(ss.str().c_str(), "wb");
   // For more visibility, I write 6 times
   for (int i=0; i<6;i++) {
-    fwrite(data, size, 1, f);
+    fwrite(data, static_cast<size_t>(size), 1, f);
   }
   fclose(f);
 }
@@ -44,7 +43,7 @@ void ChannelWriter::dumpDebugData(uint8_t *data, int size, int type) {
     SatHelper::Tools::makedir(ss.str());
     ss << "debug-" << size << "-" << type;
     FILE *f = fopen(ss.str().c_str(), "a+");
-    fwrite(data, size, 1, f);
+    fwrite(data, static_cast<size_t>(size), 1, f);
     fclose(f);
 }
 

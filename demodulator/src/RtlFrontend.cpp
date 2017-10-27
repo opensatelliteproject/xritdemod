@@ -33,6 +33,10 @@ RtlFrontend::~RtlFrontend() {
 	rtlsdr_close(device);
 }
 
+void RtlFrontend::SetBiasT(uint8_t value) {
+	std::cerr << "BiasT in RtlSdr is not supported by OSP" << std::endl;
+}
+
 uint32_t RtlFrontend::SetSampleRate(uint32_t sampleRate) {
 	this->sampleRate = sampleRate;
 	rtlsdr_set_sample_rate(device, sampleRate);

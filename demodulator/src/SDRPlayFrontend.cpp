@@ -36,6 +36,10 @@ void SDRPlayFrontend::internalCallback(short *xi, short *xq, unsigned int firstS
 	}
 }
 
+void SDRPlayFrontend::SetBiasT(uint8_t value) {
+	std::cerr << "BiasT on SDRPlay is not supported by OSP" << std::endl;
+}
+
 void SDRPlayFrontend::internalCallbackGC(unsigned int gRdB, unsigned int lnaGRdB, void *cbContext) {
 	// Not sure what I should do here.
 	std::cout << "Gains changed to " << gRdB << " - " << lnaGRdB << std::endl;
@@ -118,27 +122,21 @@ void SDRPlayFrontend::Start() {
 		case mir_sdr_AlreadyInitialised:
 			std:: cerr << "Already Initialized" << std::endl;
 			throw SatHelperException("SDRPlay Already Initialized");
-			break;
 		case mir_sdr_InvalidParam:
 			std:: cerr << "Invalid Parameter" << std::endl;
 			throw SatHelperException("SDRPlay Invalid Parameter");
-			break;
 		case mir_sdr_OutOfRange:
 			std:: cerr << "Out of Range" << std::endl;
 			throw SatHelperException("SDRPlay Out of Range");
-			break;
 		case mir_sdr_HwError:
 			std:: cerr << "Hardware Error" << std::endl;
 			throw SatHelperException("SDRPlay Hardware Error");
-			break;
 		case mir_sdr_Fail:
 			std:: cerr << "Failed to access device" << std::endl;
 			throw SatHelperException("SDRPlay Failed to Access Device");
-			break;
 		default:
 			std:: cerr << "Unknown Error: " << err << std::endl;
 			throw SatHelperException("SDRPlay Unknown Error");
-			break;
 		}
 	}
 
@@ -156,11 +154,11 @@ void SDRPlayFrontend::SetLNAGain(uint8_t value) {
 	gRdB = value;
 }
 
-void SDRPlayFrontend::SetVGAGain(uint8_t value) {
+void SDRPlayFrontend::SetVGAGain(uint8_t) {
 	std::cerr << "Not implemented for SDRPlay" << std::endl;
 }
 
-void SDRPlayFrontend::SetMixerGain(uint8_t value) {
+void SDRPlayFrontend::SetMixerGain(uint8_t) {
 	std::cerr << "Not implemented for SDRPlay" << std::endl;
 }
 

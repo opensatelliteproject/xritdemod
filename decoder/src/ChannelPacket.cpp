@@ -11,7 +11,7 @@
 ChannelPacket::ChannelPacket(char *data, int length) {
     this->data = new char[length];
     this->length = length;
-    std::memcpy(this->data, data, length);
+    std::memcpy(this->data, data, static_cast<size_t>(length));
 }
 
 ChannelPacket::~ChannelPacket() {

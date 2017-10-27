@@ -29,6 +29,10 @@ SpyServerFrontend::~SpyServerFrontend() {
 	delete[] headerData;
 }
 
+void SpyServerFrontend::SetBiasT(uint8_t value) {
+	std::cerr << "Not supported by OSP" << std::endl;
+}
+
 void SpyServerFrontend::Connect() {
 	if (receiverThread != NULL) {
 		return;

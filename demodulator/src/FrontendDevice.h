@@ -30,6 +30,7 @@ public:
 	virtual void SetLNAGain(uint8_t value) = 0;
 	virtual void SetVGAGain(uint8_t value) = 0;
 	virtual void SetMixerGain(uint8_t value) = 0;
+	virtual void SetBiasT(uint8_t value) = 0;
 	virtual uint32_t GetCenterFrequency() = 0;
 	virtual const std::string &GetName() = 0;
 	virtual uint32_t GetSampleRate() = 0;

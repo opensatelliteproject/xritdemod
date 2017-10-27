@@ -7,7 +7,6 @@
 
 #include "CFileFrontend.h"
 
-#include <cstdio>
 #include <iostream>
 
 #define BUFFERSIZE 65535
@@ -27,6 +26,10 @@ CFileFrontend::~CFileFrontend() {
 
 }
 
+void CFileFrontend::SetBiasT(uint8_t value) {
+	std::cerr << "BiasT is not supported on files" << std::endl;
+}
+
 void CFileFrontend::threadLoop() {
 	FILE *f = fopen(filename.c_str(), "rb");
 	float fPeriod = BUFFERSIZE / (float)sampleRate;
@@ -42,7 +45,7 @@ void CFileFrontend::threadLoop() {
 
 	while (running) {
 		if ((std::chrono::high_resolution_clock::now() - t0) >= period) {
-			int samplesRead = fread(sampleBufferPtr, sizeof(std::complex<float>), BUFFERSIZE, f);
+			int samplesRead = static_cast<int>(fread(sampleBufferPtr, sizeof(std::complex<float>), BUFFERSIZE, f));
 			if (cb != NULL) {
 				cb(sampleBufferPtr, samplesRead, FRONTEND_SAMPLETYPE_FLOATIQ);
 			}
@@ -82,19 +85,19 @@ void CFileFrontend::Stop() {
 	}
 }
 
-void CFileFrontend::SetAGC(bool agc) {
+void CFileFrontend::SetAGC(bool) {
 
 }
 
-void CFileFrontend::SetLNAGain(uint8_t value) {
+void CFileFrontend::SetLNAGain(uint8_t) {
 
 }
 
-void CFileFrontend::SetVGAGain(uint8_t value) {
+void CFileFrontend::SetVGAGain(uint8_t) {
 
 }
 
-void CFileFrontend::SetMixerGain(uint8_t value) {
+void CFileFrontend::SetMixerGain(uint8_t) {
 
 }
 

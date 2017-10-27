@@ -8,8 +8,6 @@
 
 #include <cstdio>
 #include <iostream>
-#include <string>
-#include <cstdint>
 #include <vector>
 #include <cstring>
 #include <SatHelper/sathelper.h>
@@ -30,8 +28,6 @@ using namespace SatHelper;
 // Uncomment this to passthrough the input samples to output
 //#define DEBUG_PASSTHROUGH
 
-#include "Parameters.h"
-
 FrontendDevice *device = NULL;
 AGC *agc = NULL;
 CostasLoop *costasLoop = NULL;
@@ -42,7 +38,7 @@ SymbolManager *symbolManager = NULL;
 CircularBuffer<float> samplesFifo(FIFO_SIZE);
 DiagManager *diagManager = NULL;
 
-int baseDecimation;
+unsigned int baseDecimation;
 
 bool running;
 
@@ -57,7 +53,7 @@ uint32_t startTime = 0;
 
 void onSamplesAvailable(void *fdata, int length, int type) {
 	if (type == FRONTEND_SAMPLETYPE_FLOATIQ) {
-		samplesFifo.addSamples((float *) fdata, length * 2);
+		samplesFifo.addSamples((float *) fdata, static_cast<unsigned int>(length * 2));
 	} else if (type == FRONTEND_SAMPLETYPE_S16IQ) {
 		int16_t *d = (int16_t *)fdata;
 		samplesFifo.unsafe_lockMutex();
@@ -210,6 +206,7 @@ void setDefaults(ConfigParser &parser) {
 	parser[CFG_CONSTELLATION] = std::string("true");
 	parser[CFG_DECODER_ADDRESS] = std::string(DEFAULT_DECODER_ADDRESS);
 	parser[CFG_DECODER_PORT] = std::string(QUOTE(DEFAULT_DECODER_PORT));
+	parser[CFG_BIAST] = std::string(QUOTE(DEFAULT_BIAST));
 	parser.SaveFile();
 }
 
@@ -224,6 +221,7 @@ int main(int argc, char **argv) {
 	std::string decoderAddress(DEFAULT_DECODER_ADDRESS);
 	int decoderPort = DEFAULT_DECODER_PORT;
 	int deviceNumber = DEFAULT_DEVICE_NUMBER;
+	uint8_t biasT = DEFAULT_BIAST;
 
 	try {
 
@@ -255,6 +253,10 @@ int main(int argc, char **argv) {
 				std::cerr << "Invalid mode specified: " << parser[CFG_MODE] << std::endl;
 				return 1;
 			}
+		}
+
+		if (parser.hasKey(CFG_BIAST)) {
+			biasT = (uint8_t) parser.getUInt(CFG_BIAST);
 		}
 
 		if (parser.hasKey(CFG_PLL_ALPHA)) {
@@ -296,7 +298,7 @@ int main(int argc, char **argv) {
 		}
 
 		if (parser.hasKey(CFG_DECIMATION)) {
-			baseDecimation = parser.getInt(CFG_DECIMATION);
+			baseDecimation = static_cast<unsigned int>(parser.getInt(CFG_DECIMATION));
 		} else {
 			std::cerr << "Field \"decimation\" is missing on config file." << std::endl;
 			return 1;
@@ -315,15 +317,15 @@ int main(int argc, char **argv) {
 		}
 
 		if (parser.hasKey(CFG_LNA_GAIN)) {
-			lnaGain = parser.getInt(CFG_LNA_GAIN);
+			lnaGain = static_cast<uint8_t>(parser.getInt(CFG_LNA_GAIN));
 		}
 
 		if (parser.hasKey(CFG_MIXER_GAIN)) {
-			mixerGain = parser.getInt(CFG_MIXER_GAIN);
+			mixerGain = static_cast<uint8_t>(parser.getInt(CFG_MIXER_GAIN));
 		}
 
 		if (parser.hasKey(CFG_VGA_GAIN)) {
-			vgaGain = parser.getInt(CFG_VGA_GAIN);
+			vgaGain = static_cast<uint8_t>(parser.getInt(CFG_VGA_GAIN));
 		}
 
 		if (parser.hasKey(CFG_AGC)) {
@@ -361,6 +363,7 @@ int main(int argc, char **argv) {
 					return 1;
 				}
 
+				device->SetBiasT(biasT);
 				std::cout << "Airspy sample rate set to " << device->GetSampleRate() << std::endl;
 
 			} else if (parser[CFG_DEVICE_TYPE] == "cfile") {
@@ -380,6 +383,7 @@ int main(int argc, char **argv) {
 				device = new RtlFrontend(deviceNumber);
 				device->SetSampleRate(sampleRate);
 				device->SetCenterFrequency(centerFrequency);
+				device->SetBiasT(biasT);
 			} else if (parser[CFG_DEVICE_TYPE] == "spyserver") {
 				std::cout << "SpyServer Frontend selected." << std::endl;
 				if (!parser.hasKey(CFG_SPYSERVER_HOST)) {
@@ -397,6 +401,7 @@ int main(int argc, char **argv) {
 				std::cout << "Server Device: " << d->GetName() << std::endl;
 				device->SetCenterFrequency(centerFrequency);
 				device->SetSampleRate(sampleRate);
+				device->SetBiasT(biasT);
 #if 0
 			} else if (parser[CFG_DEVICE_TYPE] == "hackrf") {
 				std::cout << "HackRF Frontend selected. Device Number: " << deviceNumber << std::endl;
@@ -412,6 +417,7 @@ int main(int argc, char **argv) {
 				device = new SDRPlayFrontend();
 				device->SetSampleRate(sampleRate);
 				device->SetCenterFrequency(centerFrequency);
+				device->SetBiasT(biasT);
 			}
 	#else
 			}

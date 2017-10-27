@@ -118,6 +118,7 @@ public:
 	void SetLNAGain(uint8_t value) override;
 	void SetVGAGain(uint8_t value) override;
 	void SetMixerGain(uint8_t value) override;
+    void SetBiasT(uint8_t value) override;
 
 	uint32_t GetCenterFrequency() override;
 

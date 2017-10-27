@@ -48,6 +48,12 @@
     <ClInclude Include="src\SDRPlayFrontend.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\SpyServerFrontend.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SpyServerProtocol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AirspyDevice.cpp">
@@ -75,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\SDRPlayFrontend.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SpyServerFrontend.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

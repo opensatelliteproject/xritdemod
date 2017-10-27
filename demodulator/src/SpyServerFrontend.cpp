@@ -110,7 +110,7 @@ bool SpyServerFrontend::SetSetting(uint32_t settingType, std::vector<uint32_t> p
 	if (params.size() > 0) {
 		argBytes = std::vector<uint8_t>(sizeof(SettingType) + params.size() * sizeof(uint32_t));
 		uint8_t *settingBytes = (uint8_t *) &settingType;
-		for (uint i=0; i<sizeof(uint32_t); i++) {
+		for (unsigned int i=0; i<sizeof(uint32_t); i++) {
 			argBytes[i] = settingBytes[i];
 		}
 
@@ -439,7 +439,7 @@ void SpyServerFrontend::ProcessUInt8FFT() {
 }
 
 void SpyServerFrontend::SetStreamState() {
-	SetSetting(SETTING_STREAMING_ENABLED, {(uint)(streaming ? 1 : 0)});
+	SetSetting(SETTING_STREAMING_ENABLED, {(unsigned int)(streaming ? 1 : 0)});
 }
 
 uint32_t SpyServerFrontend::SetSampleRate(uint32_t sampleRate) {

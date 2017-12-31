@@ -9,7 +9,7 @@ The demodulator application works for both HRIT / LRIT (set at compile time) and
 
 ![Screenshot](demodulator.png)
 
-### Dependencies
+## Dependencies
 
 * [librtlsdr](https://github.com/librtlsdr/librtlsdr)
 * [libairpy](https://github.com/airspy/airspyone_host/tree/master/libairspy)

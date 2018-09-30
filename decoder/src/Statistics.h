@@ -31,6 +31,8 @@ struct Statistics_st {
     uint32_t startTime;
     uint8_t syncWord[4];
     uint8_t frameLock;
+    uint8_t demodulatorFifoUsage;
+    uint8_t decoderFifoUsage;
 };
 #pragma pack(pop)
 

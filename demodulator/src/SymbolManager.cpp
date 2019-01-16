@@ -101,7 +101,7 @@ void SymbolManager::add(std::complex<float> *data, int length) {
     }
 
 	for (int i = 0; i < length; i++) {
-		dataQueue.push(data[i].imag()); // M&M Outputs the data in imaginary
+		dataQueue.push(data[i].real()); // M&M Outputs the data in real (old was imaginary due bug in libSatHelper costas loop)
 	}
 	dataMutex.unlock();
 }
